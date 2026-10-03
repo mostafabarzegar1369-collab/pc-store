@@ -66,3 +66,18 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:24px;text-align:
 .empty{text-align:center;padding:60px 20px;background:var(--card);border:1px solid var(--line);border-radius:18px}
 .empty i{font-size:60px;color:#a587ff}
 .empty h2{margin:10px 0 4px}.empty p{color:var(--mu);margin-bottom:18px}
+.card>a{display:block}
+.crumb{color:var(--mu);font-size:14px;margin:26px 0 18px}
+.crumb a:hover{color:#fff}
+.pd{display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap}
+.pstage{flex:1;min-width:280px;perspective:1000px}
+.bigp{height:380px;font-size:150px;background:var(--card2);border:1px solid var(--line);border-radius:20px;transition:transform .15s;transform-style:preserve-3d}
+.pinfo{flex:1;min-width:280px}
+.pinfo h1{font-size:30px;margin-bottom:6px}
+.price.lg{font-size:24px;margin-bottom:12px}
+.desc{color:#cbbff3;margin-bottom:18px}
+.spec{width:100%;border-collapse:collapse;margin-bottom:22px}
+.spec td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:15px}
+.spec td:first-child{color:var(--mu);width:42%}
+.buy{display:flex;gap:10px;flex-wrap:wrap}
+.buy .btn{padding:12px 24px}

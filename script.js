@@ -20,6 +20,21 @@ const products=[
  {id:'kb2',cat:'kb',name:'کیبورد ۶۰ درصد',price:2700000},
  {id:'head1',cat:'head',name:'هدست ۷.۱ گیمینگ',price:2900000},
  {id:'head2',cat:'head',name:'هدفون استودیویی',price:3600000}];
+/* مشخصات نمونه است. مقدارها را با اطلاعات واقعی محصول خودتان عوض کنید */
+const specs={
+ cpu1:[['تعداد هسته','۸'],['تعداد رشته','۱۶'],['سوکت','AM5']],
+ cpu2:[['تعداد هسته','۱۲'],['تعداد رشته','۲۰'],['سوکت','LGA1700']],
+ gpu1:[['حافظه','۱۲ گیگابایت'],['نوع حافظه','GDDR6X'],['مصرف','۲۰۰ وات']],
+ gpu2:[['حافظه','۱۶ گیگابایت'],['نوع حافظه','GDDR6'],['مصرف','۲۶۰ وات']],
+ ram1:[['ظرفیت','۳۲ گیگابایت'],['نوع','DDR5'],['فرکانس','۶۰۰۰ مگاهرتز']],
+ ram2:[['ظرفیت','۱ ترابایت'],['رابط','NVMe'],['سرعت خواندن','۷۰۰۰ مگابایت بر ثانیه']],
+ mouse1:[['اتصال','بی‌سیم'],['دقت سنسور','۲۶۰۰۰ DPI'],['وزن','۶۵ گرم']],
+ mouse2:[['اتصال','باسیم'],['دقت سنسور','۱۶۰۰۰ DPI'],['وزن','۶۰ گرم']],
+ kb1:[['نوع کلید','مکانیکال'],['چیدمان','فول‌سایز'],['نورپردازی','RGB']],
+ kb2:[['نوع کلید','مکانیکال'],['چیدمان','۶۰ درصد'],['اتصال','بی‌سیم و باسیم']],
+ head1:[['صدا','۷.۱ مجازی'],['اتصال','USB'],['میکروفون','جداشدنی']],
+ head2:[['نوع','استودیویی'],['امپدانس','۸۰ اهم'],['اتصال','باسیم']]};
+const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین، با گارانتی معتبر.',gpu:'کارت گرافیک برای بازی در کیفیت بالا و رندر سریع.',ram:'قطعه‌ی سریع برای بالا بردن سرعت کلی سیستم.',mouse:'موس دقیق و سبک برای بازی و کار روزمره.',kb:'کیبورد با حس تایپ عالی و ساخت مقاوم.',head:'هدست با صدای شفاف و راحت برای ساعت‌ها استفاده.'};
 const icon=p=>cats.find(c=>c.id==p.cat).i;
 const pic=p=>`<img src="images/${p.id}.jpg" alt="${p.name}" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'ti ${icon(p)}'}))">`;
 const cart=()=>{const c=get('cart2','{}');return c&&typeof c=='object'?c:{}};
@@ -47,10 +62,25 @@ function shop(){
  $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${c.n}</button>`).join('');
  box.innerHTML=cats.filter(c=>cat=='all'||cat==c.id).map(c=>{
   const l=products.filter(p=>p.cat==c.id&&p.name.includes(q));if(!l.length)return'';
-  return`<h2 class="g" id="${c.id}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card"><div class="pic">${pic(p)}</div><h3>${p.name}</h3><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
+  return`<h2 class="g" id="${c.id}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}</div><h3>${p.name}</h3></a><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
  box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{cat=b.dataset.c;shop()});
+}
+function productPage(){
+ const box=$('#prodBox');if(!box)return;
+ const p=products.find(x=>x.id==new URLSearchParams(location.search).get('id'));
+ if(!p){box.innerHTML='<div class="empty"><i class="ti ti-package-off"></i><h2>این محصول پیدا نشد</h2><a class="btn" href="index.html">بازگشت به فروشگاه</a></div>';return}
+ document.title=p.name;
+ const c=cats.find(x=>x.id==p.cat),rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
+ box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#${c.id}">${c.n}</a> / ${p.name}</div>
+ <div class="pd"><div class="pstage"><div class="pic bigp" id="pimg">${pic(p)}</div></div>
+ <div class="pinfo"><h1>${p.name}</h1><div class="price lg">${fa(p.price)} تومان</div><p class="desc">${descs[p.cat]}</p>
+ <table class="spec">${(specs[p.id]||[]).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+ <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div></div></div>
+ ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${r.name}</h3></a><div class="price">${fa(r.price)} تومان</div></div>`).join('')}</div>`:''}`;
+ $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
+ tilt($('#pimg'),16,0);box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
 }
 function cartPage(){
  const box=$('#cartBox');if(!box)return;
@@ -80,6 +110,6 @@ function auth(){
   if(!u)return $('#err').textContent='ایمیل یا رمز عبور درست نیست. دوباره بررسی کنید.';
   localStorage.setItem('me',JSON.stringify({name:u.name}));location='index.html'};
 }
-header();shop();cartPage();auth();
+header();shop();productPage();cartPage();auth();
 const s=$('#search');if(s)s.oninput=()=>{q=s.value.trim();shop()};
 const b=$('#big');if(b)tilt(b,24,0);
