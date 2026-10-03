@@ -7,33 +7,7 @@ const cats=[
  {id:'ram',n:'رم و حافظه',i:'ti-database'},{id:'mouse',n:'موس',i:'ti-mouse'},
  {id:'kb',n:'کیبورد',i:'ti-keyboard'},{id:'head',n:'هدست',i:'ti-headphones'}];
 /* عکس هر محصول: فایل images/شناسه.jpg (مثلا images/mouse1.jpg). اگر عکس نبود، آیکون نشان داده می‌شود */
-const products=[
- {id:'cpu1',cat:'cpu',name:'پردازنده Ryzen 7',price:12500000},
- {id:'cpu2',cat:'cpu',name:'پردازنده Core i7',price:13800000},
- {id:'gpu1',cat:'gpu',name:'کارت گرافیک RTX 4070',price:48900000},
- {id:'gpu2',cat:'gpu',name:'کارت گرافیک RX 7800',price:41000000},
- {id:'ram1',cat:'ram',name:'رم DDR5 32GB',price:6200000},
- {id:'ram2',cat:'ram',name:'SSD NVMe 1TB',price:5400000},
- {id:'mouse1',cat:'mouse',name:'موس گیمینگ بی‌سیم',price:2350000},
- {id:'mouse2',cat:'mouse',name:'موس سبک ۶۰ گرمی',price:1900000},
- {id:'kb1',cat:'kb',name:'کیبورد مکانیکال',price:3100000},
- {id:'kb2',cat:'kb',name:'کیبورد ۶۰ درصد',price:2700000},
- {id:'head1',cat:'head',name:'هدست ۷.۱ گیمینگ',price:2900000},
- {id:'head2',cat:'head',name:'هدفون استودیویی',price:3600000}];
-/* مشخصات نمونه است. مقدارها را با اطلاعات واقعی محصول خودتان عوض کنید */
-const specs={
- cpu1:[['تعداد هسته','۸'],['تعداد رشته','۱۶'],['سوکت','AM5']],
- cpu2:[['تعداد هسته','۱۲'],['تعداد رشته','۲۰'],['سوکت','LGA1700']],
- gpu1:[['حافظه','۱۲ گیگابایت'],['نوع حافظه','GDDR6X'],['مصرف','۲۰۰ وات']],
- gpu2:[['حافظه','۱۶ گیگابایت'],['نوع حافظه','GDDR6'],['مصرف','۲۶۰ وات']],
- ram1:[['ظرفیت','۳۲ گیگابایت'],['نوع','DDR5'],['فرکانس','۶۰۰۰ مگاهرتز']],
- ram2:[['ظرفیت','۱ ترابایت'],['رابط','NVMe'],['سرعت خواندن','۷۰۰۰ مگابایت بر ثانیه']],
- mouse1:[['اتصال','بی‌سیم'],['دقت سنسور','۲۶۰۰۰ DPI'],['وزن','۶۵ گرم']],
- mouse2:[['اتصال','باسیم'],['دقت سنسور','۱۶۰۰۰ DPI'],['وزن','۶۰ گرم']],
- kb1:[['نوع کلید','مکانیکال'],['چیدمان','فول‌سایز'],['نورپردازی','RGB']],
- kb2:[['نوع کلید','مکانیکال'],['چیدمان','۶۰ درصد'],['اتصال','بی‌سیم و باسیم']],
- head1:[['صدا','۷.۱ مجازی'],['اتصال','USB'],['میکروفون','جداشدنی']],
- head2:[['نوع','استودیویی'],['امپدانس','۸۰ اهم'],['اتصال','باسیم']]};
+let products=[];
 const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین، با گارانتی معتبر.',gpu:'کارت گرافیک برای بازی در کیفیت بالا و رندر سریع.',ram:'قطعه‌ی سریع برای بالا بردن سرعت کلی سیستم.',mouse:'موس دقیق و سبک برای بازی و کار روزمره.',kb:'کیبورد با حس تایپ عالی و ساخت مقاوم.',head:'هدست با صدای شفاف و راحت برای ساعت‌ها استفاده.'};
 const icon=p=>cats.find(c=>c.id==p.cat).i;
 const pic=p=>`<img src="images/${p.id}.jpg" alt="${p.name}" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'ti ${icon(p)}'}))">`;
@@ -75,8 +49,8 @@ function productPage(){
  const c=cats.find(x=>x.id==p.cat),rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
  box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#${c.id}">${c.n}</a> / ${p.name}</div>
  <div class="pd"><div class="pstage"><div class="pic bigp" id="pimg">${pic(p)}</div></div>
- <div class="pinfo"><h1>${p.name}</h1><div class="price lg">${fa(p.price)} تومان</div><p class="desc">${descs[p.cat]}</p>
- <table class="spec">${(specs[p.id]||[]).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+ <div class="pinfo"><h1>${p.name}</h1><div class="price lg">${fa(p.price)} تومان</div><p class="desc">${p.desc||descs[p.cat]}</p>
+ <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
  <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div></div></div>
  ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${r.name}</h3></a><div class="price">${fa(r.price)} تومان</div></div>`).join('')}</div>`:''}`;
  $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
@@ -110,6 +84,7 @@ function auth(){
   if(!u)return $('#err').textContent='ایمیل یا رمز عبور درست نیست. دوباره بررسی کنید.';
   localStorage.setItem('me',JSON.stringify({name:u.name}));location='index.html'};
 }
-header();shop();productPage();cartPage();auth();
+header();auth();
+fetch('products.json').then(r=>r.json()).then(d=>{products=d;shop();productPage();cartPage()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
 const s=$('#search');if(s)s.oninput=()=>{q=s.value.trim();shop()};
 const b=$('#big');if(b)tilt(b,24,0);
