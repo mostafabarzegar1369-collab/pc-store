@@ -3,6 +3,7 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const get=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||d)}catch(e){return JSON.parse(d)}};
 const SB='https://amhclwujstlipwjjahrs.supabase.co',KEY='sb_publishable_i7OICU1vj-NcXez0FU5c8Q_P2qJP4Yj';
 const sbf=(p,b,t)=>fetch(SB+p,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',...(t?{Authorization:'Bearer '+t}:{})},body:JSON.stringify(b||{})}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}));
+const rest=(p,m,b)=>{const s=session(),h={apikey:KEY,'Content-Type':'application/json',Prefer:'return=representation'};if(s)h.Authorization='Bearer '+s.at;return fetch(SB+'/rest/v1/'+p,{method:m||'GET',headers:h,body:b?JSON.stringify(b):undefined}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}))};
 const session=()=>get('sb','null');
 const save=d=>{const u=d.user||{};localStorage.setItem('sb',JSON.stringify({name:(u.user_metadata&&u.user_metadata.name)||u.email,email:u.email,at:d.access_token,rt:d.refresh_token,exp:Date.now()+(d.expires_in||3600)*1000}))};
 const logout=()=>{const s=session();if(s)sbf('/auth/v1/logout',{},s.at).catch(()=>{});localStorage.removeItem('sb');location.reload()};
@@ -29,7 +30,7 @@ function header(){
  $('#hdr').innerHTML=`<header><div class="wrap nav"><a class="logo" href="index.html"><i class="ti ti-cpu"></i> پارت‌زون</a>
  <nav>${cats.map(c=>`<a href="index.html#${c.id}">${c.n}</a>`).join('')}</nav>
  <div class="acts"><a href="cart.html" class="cartl"><i class="ti ti-shopping-cart"></i> <b id="cc">${count()}</b></a>
- ${me?`<span>${esc(me.name)}</span><button class="btn ghost" id="out">خروج</button>`
+ ${me?`<a href="orders.html">سفارش‌ها</a><span>${esc(me.name)}</span><button class="btn ghost" id="out">خروج</button>`
  :`<a class="btn ghost" href="login.html">ورود</a><a class="btn" href="register.html">ثبت‌نام</a>`}</div></div></header>`;
  const o=$('#out');if(o)o.onclick=logout;
 }
@@ -74,11 +75,28 @@ function cartPage(){
   <div class="qty"><button data-a="+" data-id="${id}" aria-label="افزایش">+</button><b>${fa(n)}</b><button data-a="-" data-id="${id}" aria-label="کاهش">−</button></div>
   <div class="lt">${fa(p.price*n)}</div><button class="rm" data-a="x" data-id="${id}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`}).join('')+
  `<div class="sum"><span>جمع کل</span><b>${fa(total)} تومان</b></div>
- <div class="sumb"><button class="btn ghost" id="clr">خالی کردن سبد</button><button class="btn" id="pay">ادامه و پرداخت</button></div><div class="err" id="msg"></div>`;
+ <div class="sumb"><button class="btn ghost" id="clr">خالی کردن سبد</button><button class="btn" id="pay">ثبت سفارش</button></div><div class="err" id="msg"></div>`;
  box.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const k=b.dataset.id,a=b.dataset.a,d=cart();
   if(a=='+')d[k]++;else if(a=='-')d[k]--;else d[k]=0;if(d[k]<=0)delete d[k];saveCart(d);cartPage()});
  $('#clr').onclick=()=>{saveCart({});cartPage()};
- $('#pay').onclick=()=>{$('#msg').textContent=session()?'درگاه پرداخت هنوز متصل نشده است. این بخش در مرحله‌ی بعد اضافه می‌شود.':'برای ادامه ابتدا وارد حساب خود شوید.'};
+$('#pay').onclick=async()=>{const m=$('#msg');m.style.color='';
+  if(!session()){m.innerHTML='برای ثبت سفارش ابتدا <a href="login.html" style="color:var(--pl)">وارد شوید</a>.';return}
+  m.textContent='در حال ثبت سفارش...';await refreshSession();
+  const items=ids.map(id=>{const p=products.find(x=>x.id==id);return{id,name:p.name,price:p.price,qty:c[id]}});
+  const r=await rest('orders','POST',{items,total}).catch(()=>null);
+  if(!r||!r.ok){m.textContent='ثبت سفارش انجام نشد. دوباره تلاش کنید.';return}
+  saveCart({});box.innerHTML=`<div class="empty"><i class="ti ti-circle-check"></i><h2>سفارش شما ثبت شد</h2><p>شماره سفارش: ${fa(r.d[0].id)}<br>پرداخت آنلاین در مرحله‌ی بعد اضافه می‌شود.</p><a class="btn" href="orders.html">سفارش‌های من</a></div>`};
+}
+async function ordersPage(){
+ const box=$('#ordBox');if(!box)return;
+ const empty=(i,t,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2>${b}</div>`;
+ if(!session())return empty('ti-lock','ابتدا وارد شوید','<a class="btn" href="login.html">ورود</a>');
+ await refreshSession();
+ const r=await rest('orders?select=*&order=created_at.desc').catch(()=>null);
+ if(!r||!r.ok)return box.innerHTML='<p class="err">بارگذاری سفارش‌ها انجام نشد. صفحه را رفرش کنید.</p>';
+ if(!r.d.length)return empty('ti-package','هنوز سفارشی ندارید','<a class="btn" href="index.html">دیدن محصولات</a>');
+ const st={pending:'در انتظار پرداخت',paid:'پرداخت‌شده',shipped:'ارسال‌شده',canceled:'لغوشده'};
+ box.innerHTML=r.d.map(o=>`<div class="row ord"><div><b>سفارش ${fa(o.id)}</b><div class="mu">${new Date(o.created_at).toLocaleDateString('fa-IR')}</div><div>${o.items.map(i=>esc(i.name)+' × '+fa(i.qty)).join('، ')}</div></div><div class="lt">${fa(o.total)} تومان<br><small>${st[o.status]||esc(o.status)}</small></div></div>`).join('');
 }
 function auth(){
  const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
@@ -98,7 +116,7 @@ function auth(){
   if(!x.ok)return m(emsg(x.d));
   save(x.d);location='index.html'};
 }
-header();auth();refreshSession().then(header);
+header();auth();ordersPage();refreshSession().then(header);
 fetch('products.json').then(r=>r.json()).then(d=>{products=d;shop();productPage();cartPage()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
 const s=$('#search');if(s)s.oninput=()=>{q=s.value.trim();shop()};
 const b=$('#big');if(b)tilt(b,24,0);

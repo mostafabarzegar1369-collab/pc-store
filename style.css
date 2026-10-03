@@ -81,3 +81,7 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:24px;text-align:
 .spec td:first-child{color:var(--mu);width:42%}
 .buy{display:flex;gap:10px;flex-wrap:wrap}
 .buy .btn{padding:12px 24px}
+.mu{color:var(--mu);font-size:13px}
+.ord{justify-content:space-between;align-items:flex-start}
+.ord .lt{text-align:left}
+.cartl+a,.acts>a:not(.btn):not(.cartl){color:var(--pl);font-size:14px}
