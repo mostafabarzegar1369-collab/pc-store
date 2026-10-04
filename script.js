@@ -12,14 +12,16 @@ const emsg=d=>errs[d.error_code||d.code]||'مشکلی پیش آمد. دوبار�
 async function refreshSession(){const s=session();if(!s||s.exp>Date.now()+60000)return;const r=await sbf('/auth/v1/token?grant_type=refresh_token',{refresh_token:s.rt}).catch(()=>null);if(r&&r.ok)save(r.d);else if(r)localStorage.removeItem('sb')}
 const fa=n=>n.toLocaleString('fa-IR');
 const cats=[
- {id:'cpu',n:'پردازنده',i:'ti-cpu'},{id:'gpu',n:'کارت گرافیک',i:'ti-chip'},
- {id:'ram',n:'رم و حافظه',i:'ti-database'},{id:'mouse',n:'موس',i:'ti-mouse'},
- {id:'kb',n:'کیبورد',i:'ti-keyboard'},{id:'head',n:'هدست',i:'ti-headphones'}];
+ {id:'cpu',n:'پردازنده',i:'ti-cpu'},{id:'gpu',n:'کارت گرافیک',i:'ti-chip'},{id:'mb',n:'مادربرد',i:'ti-cpu-2'},
+ {id:'ram',n:'رم',i:'ti-database'},{id:'ssd',n:'حافظه ذخیره‌سازی',i:'ti-server'},{id:'psu',n:'پاور',i:'ti-bolt'},
+ {id:'case',n:'قاب کیس',i:'ti-box'},{id:'cool',n:'خنک‌کننده',i:'ti-snowflake'},{id:'mon',n:'مانیتور',i:'ti-device-desktop'},
+ {id:'laptop',n:'لپ‌تاپ',i:'ti-device-laptop'},{id:'ps',n:'کنسول بازی',i:'ti-brand-playstation'},
+ {id:'mouse',n:'موس',i:'ti-mouse'},{id:'kb',n:'کیبورد',i:'ti-keyboard'},{id:'head',n:'هدست',i:'ti-headphones'}];
 /* عکس هر محصول: فایل images/شناسه.jpg (مثلا images/mouse1.jpg). اگر عکس نبود، آیکون نشان داده می‌شود */
-const cols=['#a78bfa','#ff6bb5','#ff6b78','#c084fc','#ff8fc7','#ff8a65'];cats.forEach((c,i)=>c.col=cols[i]);
-const subs={cpu:['Ryzen','Core'],gpu:['RTX','RX'],ram:['DDR5','SSD'],mouse:['بی‌سیم','سبک'],kb:['مکانیکال','۶۰ درصد'],head:['گیمینگ','استودیویی']};
+const cols=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#a78bfa','#8ea2ff','#b9a4ff'];cats.forEach((c,i)=>c.col=cols[i]);
+const subs={cpu:['Ryzen','Core'],gpu:['RTX','RX'],mb:['AM5','LGA1700'],ram:['DDR5','DDR4'],ssd:['NVMe','HDD'],psu:['۷۵۰','ماژولار'],case:['میدتاور','مینی‌تاور'],cool:['هوایی','واترکولر'],mon:['۲۴','4K'],laptop:['گیمینگ','اداری'],ps:['کنسول','دسته'],mouse:['بی‌سیم','سبک'],kb:['مکانیکال','۶۰ درصد'],head:['گیمینگ','استودیویی']};
 let products=[];
-const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین، با گارانتی معتبر.',gpu:'کارت گرافیک برای بازی در کیفیت بالا و رندر سریع.',ram:'قطعه‌ی سریع برای بالا بردن سرعت کلی سیستم.',mouse:'موس دقیق و سبک برای بازی و کار روزمره.',kb:'کیبورد با حس تایپ عالی و ساخت مقاوم.',head:'هدست با صدای شفاف و راحت برای ساعت‌ها استفاده.'};
+const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین.',gpu:'کارت گرافیک برای بازی در کیفیت بالا و رندر سریع.',mb:'مادربرد پایدار با امکانات اتصال کامل.',ram:'حافظه‌ی سریع برای بالا بردن سرعت سیستم.',ssd:'ذخیره‌سازی سریع و مطمئن برای سیستم و بازی‌ها.',psu:'پاور پایدار با توان مناسب برای قطعات شما.',case:'قاب کیس با جریان هوای خوب و جای کافی برای قطعات.',cool:'خنک‌کننده برای دمای پایین‌تر و صدای کمتر.',mon:'مانیتور با تصویر شفاف و نرخ بازسازی مناسب بازی.',laptop:'لپ‌تاپ مناسب کار، تحصیل و بازی.',ps:'محصولات کنسول بازی برای تجربه‌ی بازی روی تلویزیون.',mouse:'موس دقیق و سبک برای بازی و کار روزمره.',kb:'کیبورد با حس تایپ عالی و ساخت مقاوم.',head:'هدست با صدای شفاف و راحت برای ساعت‌ها استفاده.'};
 const icon=p=>cats.find(c=>c.id==p.cat).i;
 const pic=p=>`<img src="images/${p.id}.jpg" alt="${p.name}" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'ti ${icon(p)}'}))">`;
 const cart=()=>{const c=get('cart2','{}');return c&&typeof c=='object'?c:{}};
@@ -33,14 +35,15 @@ function header(){
  const me=session();
  $('#hdr').innerHTML=`<header><div class="wrap nav">
  <button class="burger" id="bg" aria-label="باز کردن منو"><i class="ti ti-menu-2"></i></button>${logo()}
- <nav class="dn">${cats.map(c=>`<div class="dd"><a href="${qlink(c)}" style="--c:${c.col}">${c.n}</a><div class="sub">${subs[c.id].map(x=>`<a href="${qlink(c,x)}">${x}</a>`).join('')}</div></div>`).join('')}</nav>
+ <nav class="dn"><div class="dd mega"><a href="index.html#cats">دسته‌بندی‌ها <i class="ti ti-chevron-down"></i></a><div class="mega-p">${cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</a>`).join('')}</div></div>
+ <a href="${qlink(cats.find(c=>c.id=='laptop'))}">لپ‌تاپ</a><a href="${qlink(cats.find(c=>c.id=='ps'))}">کنسول بازی</a><a href="games.html">معرفی بازی‌ها</a></nav>
  <input class="hs" id="hs" placeholder="جستجو در محصولات" aria-label="جستجو">
  <div class="acts"><a href="cart.html" class="cartl"><i class="ti ti-shopping-cart"></i> <b id="cc">${count()}</b></a>
  ${me?`<a href="orders.html">سفارش‌ها</a><span>${esc(me.name)}</span><button class="btn ghost" id="out">خروج</button>`
  :`<a class="btn ghost" href="login.html">ورود</a><a class="btn" href="register.html">ثبت‌نام</a>`}</div></div></header>
  <div class="ov" id="ov"></div>
  <aside class="drawer" id="dr" aria-label="منو"><div class="dh">${logo()}<button class="x" id="dx" aria-label="بستن منو"><i class="ti ti-x"></i></button></div>
- <div class="dq"><a href="index.html"><i class="ti ti-home"></i>خانه</a>
+ <div class="dq"><a href="index.html"><i class="ti ti-home"></i>خانه</a><a href="games.html"><i class="ti ti-device-gamepad-2"></i>معرفی بازی‌ها</a>
  <a href="cart.html"><i class="ti ti-shopping-cart"></i>سبد خرید<b class="bdg">${count()}</b></a>
  ${me?`<a href="orders.html"><i class="ti ti-package"></i>سفارش‌های من</a><button class="qb" id="out2"><i class="ti ti-logout"></i>خروج (${esc(me.name)})</button>`
  :`<a href="login.html"><i class="ti ti-login"></i>ورود</a><a href="register.html"><i class="ti ti-user-plus"></i>ثبت‌نام</a>`}</div>
@@ -58,8 +61,8 @@ function header(){
 function footer(){
  document.querySelectorAll('footer').forEach(x=>x.remove());
  document.body.insertAdjacentHTML('beforeend',`<footer class="ft"><div class="wrap fg"><div>${logo()}<p>فروشگاه آنلاین قطعات و لوازم جانبی کامپیوتر.</p></div>
- <div><h4>دسته‌ها</h4>${cats.map(c=>`<a href="${qlink(c)}">${c.n}</a>`).join('')}</div>
- <div><h4>حساب کاربری</h4><a href="login.html">ورود</a><a href="register.html">ثبت‌نام</a><a href="cart.html">سبد خرید</a><a href="orders.html">سفارش‌های من</a></div></div>
+ <div><h4>دسته‌ها</h4>${cats.slice(0,8).map(c=>`<a href="${qlink(c)}">${c.n}</a>`).join('')}</div>
+ <div><h4>حساب کاربری</h4><a href="login.html">ورود</a><a href="register.html">ثبت‌نام</a><a href="cart.html">سبد خرید</a><a href="orders.html">سفارش‌های من</a><a href="games.html">معرفی بازی‌ها</a></div></div>
  <div class="cp">© پارت‌زون، تمام حقوق محفوظ است.</div></footer>`);
 }
 function tilt(el,deg,lift){
@@ -73,7 +76,7 @@ function shop(){
  $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${c.n}</button>`).join('');
  box.innerHTML=cats.filter(c=>cat=='all'||cat==c.id).map(c=>{
   const l=products.filter(p=>p.cat==c.id&&p.name.includes(q));if(!l.length)return'';
-  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}</div><h3>${p.name}</h3></a><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
+  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${p.name}</h3></a><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
  box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{cat=b.dataset.c;shop()});
@@ -144,6 +147,18 @@ async function adminPage(){
   const u=await rest('orders?id=eq.'+x.dataset.id,'PATCH',{status:x.value}).catch(()=>null);
   toast(u&&u.ok&&u.d.length?'وضعیت سفارش ذخیره شد':'ذخیره نشد. دوباره تلاش کنید.')});
 }
+function bestRail(){const b=$('#best');if(!b)return;
+ b.innerHTML=products.filter(p=>p.best).map((p,i)=>{const c=cats.find(x=>x.id==p.cat);return`<a class="bc" href="product.html?id=${p.id}" style="--c:${c.col}"><span class="rk">${fa(i+1)}</span><div class="pic">${pic(p)}</div><h3>${p.name}</h3><div class="price">${fa(p.price)} تومان</div></a>`}).join('')}
+function tiles(){const t=$('#tiles');if(t)t.innerHTML=cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</a>`).join('')}
+async function gamesPage(){
+ const box=$('#gBox');if(!box)return;
+ let g;try{g=await(await fetch('games.json')).json()}catch(e){box.innerHTML='<p class="err">بارگذاری بازی‌ها انجام نشد. صفحه را رفرش کنید.</p>';return}
+ let f='all';const lab={PC:'PC',PS:'PlayStation'};
+ const draw=()=>{$('#gChips').innerHTML=[['all','همه'],['PC','PC'],['PS','PlayStation']].map(x=>`<button class="chip ${f==x[0]?'on':''}" data-f="${x[0]}">${x[1]}</button>`).join('');
+  box.innerHTML=g.filter(x=>f=='all'||x.pf.includes(f)).map((x,i)=>`<div class="gc" style="--c:${cols[i%cols.length]}"><div class="gi"><i class="ti ti-device-gamepad-2"></i></div><h3>${esc(x.name)}</h3><div class="tg"><span>${esc(x.genre)}</span>${x.pf.map(p=>`<span class="pf">${lab[p]}</span>`).join('')}</div><p>${esc(x.txt)}</p><div class="gb"><a class="btn" href="${qlink(cats.find(c=>c.id==x.need))}">سخت‌افزار مناسب</a>${x.pf.includes('PS')?`<a class="btn ghost" href="${qlink(cats.find(c=>c.id=='ps'))}">کنسول</a>`:''}</div></div>`).join('');
+  $('#gChips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{f=b.dataset.f;draw()})};
+ draw();
+}
 function auth(){
  const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
  if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
@@ -162,7 +177,7 @@ function auth(){
   if(!x.ok)return m(emsg(x.d));
   save(x.d);location='index.html'};
 }
-footer();header();auth();ordersPage();adminPage();refreshSession().then(header);
-fetch('products.json').then(r=>r.json()).then(d=>{products=d;shop();productPage();cartPage()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
+footer();header();tiles();gamesPage();auth();ordersPage();adminPage();refreshSession().then(header);
+fetch('products.json').then(r=>r.json()).then(d=>{products=d;shop();productPage();cartPage();bestRail()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
 const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
 const b=$('#big');if(b)tilt(b,24,0);

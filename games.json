@@ -1,0 +1,14 @@
+[
+ {"id":"cyberpunk","name":"Cyberpunk 2077","genre":"نقش‌آفرینی","pf":["PC","PS"],"txt":"ماجراجویی در شهری آینده‌نگر با گرافیک سنگین.","need":"gpu"},
+ {"id":"witcher3","name":"The Witcher 3","genre":"نقش‌آفرینی","pf":["PC","PS"],"txt":"دنیای باز و داستان‌محور با ساعت‌ها ماجراجویی.","need":"gpu"},
+ {"id":"elden","name":"Elden Ring","genre":"اکشن نقش‌آفرینی","pf":["PC","PS"],"txt":"دنیای باز چالش‌برانگیز با مبارزه‌های سخت.","need":"gpu"},
+ {"id":"gtav","name":"GTA V","genre":"اکشن ماجراجویی","pf":["PC","PS"],"txt":"دنیای باز بزرگ با حالت آنلاین پرطرفدار.","need":"cpu"},
+ {"id":"rdr2","name":"Red Dead Redemption 2","genre":"اکشن ماجراجویی","pf":["PC","PS"],"txt":"ماجراجویی در غرب وحشی با جزئیات بالا.","need":"gpu"},
+ {"id":"gow","name":"God of War","genre":"اکشن ماجراجویی","pf":["PS","PC"],"txt":"داستان اسطوره‌ای با مبارزه‌های سینمایی.","need":"ps"},
+ {"id":"spider","name":"Marvel's Spider-Man","genre":"اکشن ماجراجویی","pf":["PS","PC"],"txt":"تاب‌خوردن در شهر و مبارزه با شرورها.","need":"ps"},
+ {"id":"tlou","name":"The Last of Us","genre":"اکشن ماجراجویی","pf":["PS","PC"],"txt":"داستانی احساسی در دنیای پس از فاجعه.","need":"ps"},
+ {"id":"cs2","name":"Counter-Strike 2","genre":"تیراندازی","pf":["PC"],"txt":"تیراندازی تیمی رقابتی. نرخ بازسازی بالا کمک می‌کند.","need":"mon"},
+ {"id":"valorant","name":"Valorant","genre":"تیراندازی","pf":["PC"],"txt":"تیراندازی تیمی با تمرکز بر دقت و واکنش سریع.","need":"mouse"},
+ {"id":"mc","name":"Minecraft","genre":"ساخت‌وساز و بقا","pf":["PC","PS"],"txt":"ساختن و کاوش در دنیایی بی‌پایان.","need":"cpu"},
+ {"id":"bg3","name":"Baldur's Gate 3","genre":"نقش‌آفرینی","pf":["PC","PS"],"txt":"نقش‌آفرینی نوبتی با داستان‌های شاخه‌شاخه.","need":"cpu"}
+]
