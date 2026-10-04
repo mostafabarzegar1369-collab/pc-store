@@ -65,7 +65,7 @@ function footer(){
  <div><h4>حساب کاربری</h4><a href="login.html">ورود</a><a href="register.html">ثبت‌نام</a><a href="cart.html">سبد خرید</a><a href="orders.html">سفارش‌های من</a><a href="games.html">معرفی بازی‌ها</a></div></div>
  <div class="cp">© پارت‌زون، تمام حقوق محفوظ است.</div></footer>`);
 }
-function tilt(el,deg,lift){
+function tilt(el,deg,lift){if(matchMedia('(hover:none)').matches)return;
  el.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
   el.style.transform=`rotateY(${-x*deg}deg) rotateX(${y*deg}deg) translateY(${lift}px) scale(1.04)`});
  el.addEventListener('mouseleave',()=>el.style.transform='');

@@ -255,3 +255,31 @@ body{background:radial-gradient(800px 380px at 90% -40px,rgba(124,77,255,.3),tra
  .hero .row{flex-wrap:nowrap}
  .hero .btn{padding:10px 14px;font-size:14px}
 }
+/* ===== ریسپانسیو کامل: سازگار با هر اندازه صفحه ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overflow-x:hidden}
+img,svg,video{max-width:100%}
+.grid>*,.tiles>*,.bento>*,.feat>*,.ggrid>*,.stats>*,.rail>*{min-width:0}
+.card h3,.bc h3,.gc h3{overflow-wrap:anywhere}
+.nav{gap:clamp(8px,2vw,22px)}
+.acts{gap:6px}
+.logo{font-size:clamp(17px,5.4vw,22px)}
+.lg{width:clamp(30px,9vw,36px);height:clamp(30px,9vw,36px);font-size:clamp(18px,5vw,22px)}
+.hero{padding:clamp(18px,4vw,48px)}
+.hero h1{font-size:clamp(24px,5.2vw,44px)}
+.stage{min-width:0}
+.fan{width:min(320px,100%);height:auto;aspect-ratio:320/210;container-type:inline-size}
+.fc.a{width:34.4%;height:62%;left:0;top:22%;font-size:16cqw}
+.fc.c{width:34.4%;height:62%;left:65.6%;top:24%;font-size:16cqw}
+.fc.b{width:43.8%;height:76%;left:28.1%;top:7.6%;font-size:22cqw}
+.fan>.ftag:nth-child(1){left:3%!important;top:0!important}
+.fan>.ftag:nth-child(2){left:59%!important;bottom:-2%!important}
+.ftag{font-size:clamp(10px,3.6cqw,12px)}
+.bigp{height:clamp(220px,60vw,380px);font-size:clamp(90px,28vw,150px)}
+.auth{width:calc(100% - 28px);margin:clamp(24px,8vw,60px) auto}
+.row .inf,.lt{min-width:0}
+.search{max-width:100%}
+.drawer{height:100dvh;width:min(88vw,340px)}
+@media(max-width:800px){.stage,.hero>div:first-child{width:100%}}
+@media(max-width:420px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.feat{grid-template-columns:repeat(2,minmax(0,1fr))}.stats b{font-size:16px}.row{padding:10px;gap:10px}.pic.sm{width:64px;height:64px}}
+@media(hover:none){.card:hover,.tiles a:hover,.bento a:hover{transform:none}}
