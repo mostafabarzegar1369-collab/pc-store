@@ -23,7 +23,9 @@ const subs={cpu:['Ryzen','Core'],gpu:['RTX','RX'],mb:['AM5','LGA1700'],ram:['DDR
 let products=[];
 const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین.',gpu:'کارت گرافیک برای بازی در کیفیت بالا و رندر سریع.',mb:'مادربرد پایدار با امکانات اتصال کامل.',ram:'حافظه‌ی سریع برای بالا بردن سرعت سیستم.',ssd:'ذخیره‌سازی سریع و مطمئن برای سیستم و بازی‌ها.',psu:'پاور پایدار با توان مناسب برای قطعات شما.',case:'قاب کیس با جریان هوای خوب و جای کافی برای قطعات.',cool:'خنک‌کننده برای دمای پایین‌تر و صدای کمتر.',mon:'مانیتور با تصویر شفاف و نرخ بازسازی مناسب بازی.',laptop:'لپ‌تاپ مناسب کار، تحصیل و بازی.',ps:'محصولات کنسول بازی برای تجربه‌ی بازی روی تلویزیون.',mouse:'موس دقیق و سبک برای بازی و کار روزمره.',kb:'کیبورد با حس تایپ عالی و ساخت مقاوم.',head:'هدست با صدای شفاف و راحت برای ساعت‌ها استفاده.'};
 const icon=p=>cats.find(c=>c.id==p.cat).i;
-const pic=p=>`<img src="images/${p.id}.jpg" alt="${p.name}" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'ti ${icon(p)}'}))">`;
+const EXT=['jpg','png','webp','jpeg'];
+window.imgFail=el=>{const i=+(el.dataset.i||0)+1;if(i<EXT.length){el.dataset.i=i;el.src='images/'+el.dataset.id+'.'+EXT[i]}else el.replaceWith(Object.assign(document.createElement('i'),{className:'ti '+el.dataset.ic}))};
+const pic=p=>`<img src="images/${p.id}.jpg" data-id="${p.id}" data-ic="${icon(p)}" alt="${p.name}" loading="lazy" onerror="imgFail(this)">`;
 const cart=()=>{const c=get('cart2','{}');return c&&typeof c=='object'?c:{}};
 const saveCart=c=>{localStorage.setItem('cart2',JSON.stringify(c));const n=Object.values(c).reduce((a,b)=>a+b,0);document.querySelectorAll('#cc,.bdg').forEach(e=>e.textContent=n)};
 const count=()=>Object.values(cart()).reduce((a,b)=>a+b,0);
@@ -76,9 +78,10 @@ function shop(){
  $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${c.n}</button>`).join('');
  box.innerHTML=cats.filter(c=>cat=='all'||cat==c.id).map(c=>{
   const l=products.filter(p=>p.cat==c.id&&p.name.includes(q));if(!l.length)return'';
-  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${p.name}</h3></a><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
+  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${p.name}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="افزودن به مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
  box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
+ box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{cat=b.dataset.c;shop()});
 }
 function productPage(){
@@ -88,13 +91,13 @@ function productPage(){
  document.title=p.name;
  const c=cats.find(x=>x.id==p.cat),rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
  box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#${c.id}">${c.n}</a> / ${p.name}</div>
- <div class="pd"><div class="pstage"><div class="pic bigp" id="pimg" style="--c:${c.col}">${pic(p)}</div></div>
+ <div class="pd"><div class="pstage"><div class="pic bigp" id="pimg" style="--c:${c.col}">${pic(p)}</div><div class="pshadow"></div><small class="hint">لمس کنید یا نگه دارید تا بزرگ شود</small></div>
  <div class="pinfo"><h1>${p.name}</h1><div class="price lg">${fa(p.price)} تومان</div><p class="desc">${p.desc||descs[p.cat]}</p>
  <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
- <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div></div></div>
+ <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><button class="btn ghost" id="cmpp" data-id="${p.id}"><i class="ti ti-arrows-diff"></i> مقایسه</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div></div></div>
  ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${r.name}</h3></a><div class="price">${fa(r.price)} تومان</div></div>`).join('')}</div>`:''}`;
  $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
- tilt($('#pimg'),16,0);box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
+ tilt($('#pimg'),16,0);zoomable($('#pimg'));$('#cmpp').onclick=()=>toggleCmp(p.id);syncCmp();box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
 }
 function cartPage(){
  const box=$('#cartBox');if(!box)return;
@@ -159,6 +162,48 @@ async function gamesPage(){
   $('#gChips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{f=b.dataset.f;draw()})};
  draw();
 }
+const cmp=()=>{const a=get('cmp','[]');return Array.isArray(a)?a:[]};
+const saveCmp=a=>{localStorage.setItem('cmp',JSON.stringify(a));syncCmp();cmpBar()};
+function syncCmp(){const a=cmp();document.querySelectorAll('.cmpb').forEach(x=>x.classList.toggle('on',a.includes(x.dataset.id)));const p=$('#cmpp');if(p&&p.dataset.id)p.classList.toggle('on',a.includes(p.dataset.id))}
+function toggleCmp(id){const a=cmp(),p=products.find(x=>x.id==id);if(!p)return;
+ if(a.includes(id)){saveCmp(a.filter(x=>x!=id));return toast('از مقایسه حذف شد')}
+ const f=products.find(x=>x.id==a[0]);if(f&&f.cat!=p.cat)return toast('فقط محصولات هم‌دسته را می‌توان مقایسه کرد');
+ if(a.length>=4)return toast('حداکثر ۴ محصول قابل مقایسه است');
+ a.push(id);saveCmp(a);toast('به مقایسه اضافه شد')}
+function cmpBar(){let b=$('#cmpbar');const a=cmp().filter(id=>products.some(p=>p.id==id));
+ if(!a.length){if(b)b.remove();return}
+ if(!b){b=document.createElement('div');b.id='cmpbar';document.body.appendChild(b)}
+ b.innerHTML=`<span><i class="ti ti-arrows-diff"></i> ${fa(a.length)} محصول در مقایسه</span><a class="btn" href="compare.html">مقایسه</a><button id="cmpclr" aria-label="پاک کردن مقایسه"><i class="ti ti-x"></i></button>`;
+ $('#cmpclr').onclick=()=>saveCmp([])}
+function comparePage(){const box=$('#cmpBox');if(!box)return;
+ const ids=cmp().filter(id=>products.some(p=>p.id==id));
+ if(ids.length<2){box.innerHTML='<div class="empty"><i class="ti ti-arrows-diff"></i><h2>حداقل دو محصول لازم است</h2><p>در صفحه‌ی محصولات روی دکمه‌ی مقایسه‌ی دو محصول هم‌دسته بزنید.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';return}
+ const L=ids.map(id=>products.find(p=>p.id==id)),labels=[...new Set(L.flatMap(p=>(p.specs||[]).map(x=>x[0])))],low=Math.min(...L.map(p=>p.price));
+ const val=(p,l)=>{const x=(p.specs||[]).find(y=>y[0]==l);return x?x[1]:'—'};
+ box.innerHTML=`<div class="cmpw"><table class="cmpt"><tr><th></th>${L.map(p=>`<td class="ch" style="--c:${cats.find(c=>c.id==p.cat).col}"><div class="pic sm">${pic(p)}</div><a href="product.html?id=${p.id}"><b>${esc(p.name)}</b></a><button class="rm" data-id="${p.id}" aria-label="حذف از مقایسه"><i class="ti ti-x"></i></button></td>`).join('')}</tr>
+ <tr><th>قیمت</th>${L.map(p=>`<td class="${p.price==low?'best':''}">${fa(p.price)} تومان${p.price==low?'<small>کم‌ترین قیمت</small>':''}</td>`).join('')}</tr>
+ ${labels.map(l=>{const v=L.map(p=>val(p,l));return`<tr class="${new Set(v).size>1?'diff':''}"><th>${esc(l)}</th>${v.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`}).join('')}
+ <tr><th></th>${L.map(p=>`<td><button class="btn add2" data-id="${p.id}">افزودن به سبد</button></td>`).join('')}</tr></table></div>
+ <p class="mu">ردیف‌هایی که مقدارشان فرق دارد رنگی هستند.</p><button class="btn ghost" id="cl">پاک کردن مقایسه</button>`;
+ box.querySelectorAll('.rm').forEach(b=>b.onclick=()=>{saveCmp(cmp().filter(x=>x!=b.dataset.id));comparePage()});
+ box.querySelectorAll('.add2').forEach(b=>b.onclick=()=>{const k=cart();k[b.dataset.id]=(k[b.dataset.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')});
+ $('#cl').onclick=()=>{saveCmp([]);comparePage()}}
+function zoomable(el){if(!el)return;let t,held=false;
+ el.addEventListener('pointerdown',()=>{held=false;t=setTimeout(()=>{held=true;el.classList.add('pull')},280)});
+ const end=()=>{clearTimeout(t);el.classList.remove('pull')};
+ el.addEventListener('pointerup',()=>{const was=held;end();if(!was)lightbox(el)});
+ ['pointerleave','pointercancel'].forEach(e=>el.addEventListener(e,end));
+ el.addEventListener('contextmenu',e=>e.preventDefault())}
+function lightbox(el){const im=el.querySelector('img');if(!im)return;
+ const o=document.createElement('div');o.className='lb';
+ o.innerHTML=`<button class="lbx" aria-label="بستن"><i class="ti ti-x"></i></button><img src="${im.currentSrc||im.src}" alt="${esc(im.alt)}"><small>برای بزرگ‌نمایی روی عکس بزنید</small>`;
+ document.body.appendChild(o);document.body.classList.add('lock');
+ const g=o.querySelector('img');let z=false;
+ const close=()=>{o.remove();document.body.classList.remove('lock');document.removeEventListener('keydown',k)};
+ const k=e=>{if(e.key=='Escape')close()};document.addEventListener('keydown',k);
+ o.onclick=e=>{if(e.target==o)close()};o.querySelector('.lbx').onclick=close;
+ g.onclick=()=>{z=!z;g.classList.toggle('z',z)};
+ g.addEventListener('pointermove',e=>{if(z)g.style.transformOrigin=(e.offsetX/g.offsetWidth*100)+'% '+(e.offsetY/g.offsetHeight*100)+'%'})}
 function auth(){
  const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
  if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
@@ -178,6 +223,6 @@ function auth(){
   save(x.d);location='index.html'};
 }
 footer();header();tiles();gamesPage();auth();ordersPage();adminPage();refreshSession().then(header);
-fetch('products.json').then(r=>r.json()).then(d=>{products=d;shop();productPage();cartPage();bestRail()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
+fetch('products.json').then(r=>r.json()).then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
 const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
 const b=$('#big');if(b)tilt(b,24,0);
