@@ -3,7 +3,7 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const get=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||d)}catch(e){return JSON.parse(d)}};
 const SB='https://amhclwujstlipwjjahrs.supabase.co',KEY='sb_publishable_i7OICU1vj-NcXez0FU5c8Q_P2qJP4Yj';
 const sbf=(p,b,t)=>fetch(SB+p,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',...(t?{Authorization:'Bearer '+t}:{})},body:JSON.stringify(b||{})}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}));
-const rest=(p,m,b)=>{const s=session(),h={apikey:KEY,'Content-Type':'application/json',Prefer:'return=representation'};if(s)h.Authorization='Bearer '+s.at;return fetch(SB+'/rest/v1/'+p,{method:m||'GET',headers:h,body:b?JSON.stringify(b):undefined}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}))};
+const rest=(p,m,b,pf)=>{const s=session(),h={apikey:KEY,'Content-Type':'application/json',Prefer:pf||'return=representation'};if(s)h.Authorization='Bearer '+s.at;return fetch(SB+'/rest/v1/'+p,{method:m||'GET',headers:h,body:b?JSON.stringify(b):undefined}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}))};
 const session=()=>get('sb','null');
 const save=d=>{const u=d.user||{};localStorage.setItem('sb',JSON.stringify({name:(u.user_metadata&&u.user_metadata.name)||u.email,email:u.email,at:d.access_token,rt:d.refresh_token,exp:Date.now()+(d.expires_in||3600)*1000}))};
 const logout=()=>{const s=session();if(s)sbf('/auth/v1/logout',{},s.at).catch(()=>{});localStorage.removeItem('sb');location.reload()};
@@ -20,12 +20,14 @@ const cats=[
 /* عکس هر محصول: فایل images/شناسه.jpg (مثلا images/mouse1.jpg). اگر عکس نبود، آیکون نشان داده می‌شود */
 const cols=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#a78bfa','#8ea2ff','#b9a4ff'];cats.forEach((c,i)=>c.col=cols[i]);
 const subs={cpu:['Ryzen','Core'],gpu:['RTX','RX'],mb:['AM5','LGA1700'],ram:['DDR5','DDR4'],ssd:['NVMe','HDD'],psu:['۷۵۰','ماژولار'],case:['میدتاور','مینی‌تاور'],cool:['هوایی','واترکولر'],mon:['۲۴','4K'],laptop:['گیمینگ','اداری'],ps:['کنسول','دسته'],mouse:['بی‌سیم','سبک'],kb:['مکانیکال','۶۰ درصد'],head:['گیمینگ','استودیویی']};
+/* اگر برای دسته‌ای عکس گذاشتید (images/cat-شناسه.jpg)، شناسه‌اش را اینجا بنویسید. مثال: ['gpu','case'] */
+const CAT_IMAGES=[];
 let products=[];
 const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین.',gpu:'کارت گرافیک برای بازی در کیفیت بالا و رندر سریع.',mb:'مادربرد پایدار با امکانات اتصال کامل.',ram:'حافظه‌ی سریع برای بالا بردن سرعت سیستم.',ssd:'ذخیره‌سازی سریع و مطمئن برای سیستم و بازی‌ها.',psu:'پاور پایدار با توان مناسب برای قطعات شما.',case:'قاب کیس با جریان هوای خوب و جای کافی برای قطعات.',cool:'خنک‌کننده برای دمای پایین‌تر و صدای کمتر.',mon:'مانیتور با تصویر شفاف و نرخ بازسازی مناسب بازی.',laptop:'لپ‌تاپ مناسب کار، تحصیل و بازی.',ps:'محصولات کنسول بازی برای تجربه‌ی بازی روی تلویزیون.',mouse:'موس دقیق و سبک برای بازی و کار روزمره.',kb:'کیبورد با حس تایپ عالی و ساخت مقاوم.',head:'هدست با صدای شفاف و راحت برای ساعت‌ها استفاده.'};
 const icon=p=>cats.find(c=>c.id==p.cat).i;
 const EXT=['jpg','png','webp','jpeg'];
 window.imgFail=el=>{const i=+(el.dataset.i||0)+1;if(i<EXT.length){el.dataset.i=i;el.src='images/'+el.dataset.id+'.'+EXT[i]}else el.replaceWith(Object.assign(document.createElement('i'),{className:'ti '+el.dataset.ic}))};
-const pic=p=>`<img src="images/${p.id}.jpg" data-id="${p.id}" data-ic="${icon(p)}" alt="${p.name}" loading="lazy" onerror="imgFail(this)">`;
+const pic=p=>p.img?`<img src="${esc(p.img)}" data-id="${p.id}" data-i="99" data-ic="${icon(p)}" alt="${esc(p.name)}" loading="lazy" onerror="imgFail(this)">`:`<img src="images/${p.id}.jpg" data-id="${p.id}" data-ic="${icon(p)}" alt="${esc(p.name)}" loading="lazy" onerror="imgFail(this)">`;
 const cart=()=>{const c=get('cart2','{}');return c&&typeof c=='object'?c:{}};
 const saveCart=c=>{localStorage.setItem('cart2',JSON.stringify(c));const n=Object.values(c).reduce((a,b)=>a+b,0);document.querySelectorAll('#cc,.bdg').forEach(e=>e.textContent=n)};
 const count=()=>Object.values(cart()).reduce((a,b)=>a+b,0);
@@ -78,7 +80,7 @@ function shop(){
  $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${c.n}</button>`).join('');
  box.innerHTML=cats.filter(c=>cat=='all'||cat==c.id).map(c=>{
   const l=products.filter(p=>p.cat==c.id&&p.name.includes(q));if(!l.length)return'';
-  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${p.name}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="افزودن به مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
+  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="افزودن به مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
  box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
  box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
@@ -90,12 +92,12 @@ function productPage(){
  if(!p){box.innerHTML='<div class="empty"><i class="ti ti-package-off"></i><h2>این محصول پیدا نشد</h2><a class="btn" href="index.html">بازگشت به فروشگاه</a></div>';return}
  document.title=p.name;
  const c=cats.find(x=>x.id==p.cat),rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
- box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#${c.id}">${c.n}</a> / ${p.name}</div>
+ box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#${c.id}">${c.n}</a> / ${esc(p.name)}</div>
  <div class="pd"><div class="pstage"><div class="pic bigp" id="pimg" style="--c:${c.col}">${pic(p)}</div><div class="pshadow"></div><small class="hint">لمس کنید یا نگه دارید تا بزرگ شود</small></div>
- <div class="pinfo"><h1>${p.name}</h1><div class="price lg">${fa(p.price)} تومان</div><p class="desc">${p.desc||descs[p.cat]}</p>
- <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+ <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${fa(p.price)} تومان</div><p class="desc">${esc(p.desc||descs[p.cat])}</p>
+ <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
  <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><button class="btn ghost" id="cmpp" data-id="${p.id}"><i class="ti ti-arrows-diff"></i> مقایسه</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div></div></div>
- ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${r.name}</h3></a><div class="price">${fa(r.price)} تومان</div></div>`).join('')}</div>`:''}`;
+ ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${esc(r.name)}</h3></a><div class="price">${fa(r.price)} تومان</div></div>`).join('')}</div>`:''}`;
  $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
  tilt($('#pimg'),16,0);zoomable($('#pimg'));$('#cmpp').onclick=()=>toggleCmp(p.id);syncCmp();box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
 }
@@ -105,7 +107,7 @@ function cartPage(){
  if(!ids.length){box.innerHTML='<div class="empty"><i class="ti ti-shopping-cart-off"></i><h2>سبد خرید شما خالی است</h2><p>محصولی انتخاب کنید تا اینجا نمایش داده شود.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';return}
  let total=0;
  box.innerHTML=ids.map(id=>{const p=products.find(x=>x.id==id),n=c[id];total+=p.price*n;
-  return`<div class="row"><div class="pic sm">${pic(p)}</div><div class="inf"><h3>${p.name}</h3><div class="price">${fa(p.price)} تومان</div></div>
+  return`<div class="row"><div class="pic sm">${pic(p)}</div><div class="inf"><h3>${esc(p.name)}</h3><div class="price">${fa(p.price)} تومان</div></div>
   <div class="qty"><button data-a="+" data-id="${id}" aria-label="افزایش">+</button><b>${fa(n)}</b><button data-a="-" data-id="${id}" aria-label="کاهش">−</button></div>
   <div class="lt">${fa(p.price*n)}</div><button class="rm" data-a="x" data-id="${id}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`}).join('')+
  `<div class="sum"><span>جمع کل</span><b>${fa(total)} تومان</b></div>
@@ -150,9 +152,16 @@ async function adminPage(){
   const u=await rest('orders?id=eq.'+x.dataset.id,'PATCH',{status:x.value}).catch(()=>null);
   toast(u&&u.ok&&u.d.length?'وضعیت سفارش ذخیره شد':'ذخیره نشد. دوباره تلاش کنید.')});
 }
+const normP=d=>{if(!d||!/^[\w-]+$/.test(d.id)||!cats.some(c=>c.id==d.cat))return null;return{id:d.id,cat:d.cat,name:String(d.name||''),price:+d.price||0,specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''}};
+async function loadProducts(){
+ try{const r=await fetch(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}});
+  if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length)return d.map(normP).filter(Boolean)}}catch(e){}
+ return (await fetch('products.json')).json()}
 function bestRail(){const b=$('#best');if(!b)return;
- b.innerHTML=products.filter(p=>p.best).map((p,i)=>{const c=cats.find(x=>x.id==p.cat);return`<a class="bc" href="product.html?id=${p.id}" style="--c:${c.col}"><span class="rk">${fa(i+1)}</span><div class="pic">${pic(p)}</div><h3>${p.name}</h3><div class="price">${fa(p.price)} تومان</div></a>`}).join('')}
-function tiles(){const t=$('#tiles');if(t)t.innerHTML=cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</a>`).join('')}
+ b.innerHTML=products.filter(p=>p.best).map((p,i)=>{const c=cats.find(x=>x.id==p.cat);return`<a class="bc" href="product.html?id=${p.id}" style="--c:${c.col}"><span class="rk">${fa(i+1)}</span><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3><div class="price">${fa(p.price)} تومان</div></a>`}).join('')}
+function tiles(){const t=$('#tiles');if(!t)return;
+ t.innerHTML=cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><span class="cc">${CAT_IMAGES.includes(c.id)?`<img src="images/cat-${c.id}.jpg" data-id="cat-${c.id}" data-ic="${c.i}" alt="" onerror="imgFail(this)">`:`<i class="ti ${c.i}"></i>`}</span>${c.n}</a>`).join('');
+ document.querySelectorAll('.strip .sa').forEach(b=>b.onclick=()=>t.scrollBy({left:b.classList.contains('l')?-320:320,behavior:'smooth'}))}
 async function gamesPage(){
  const box=$('#gBox');if(!box)return;
  let g;try{g=await(await fetch('games.json')).json()}catch(e){box.innerHTML='<p class="err">بارگذاری بازی‌ها انجام نشد. صفحه را رفرش کنید.</p>';return}
@@ -204,6 +213,90 @@ function lightbox(el){const im=el.querySelector('img');if(!im)return;
  o.onclick=e=>{if(e.target==o)close()};o.querySelector('.lbx').onclick=close;
  g.onclick=()=>{z=!z;g.classList.toggle('z',z)};
  g.addEventListener('pointermove',e=>{if(z)g.style.transformOrigin=(e.offsetX/g.offsetWidth*100)+'% '+(e.offsetY/g.offsetHeight*100)+'%'})}
+function slider(){const r=$('#sl');if(!r)return;
+ const ps=qlink(cats.find(c=>c.id=='ps')),lp=qlink(cats.find(c=>c.id=='laptop'));
+ /* برای اسلاید جدید یک بلوک مثل بلوک‌های زیر اضافه کنید */
+ const S=[
+  {t:'فروش ویژه قطعات گیمینگ',h:'قدرت سیستمت رو<br><span class="hl">خودت بساز</span>',p:'از کارت گرافیک تا قاب کیس، از لپ‌تاپ تا کنسول بازی؛ همه‌چیز در یک فروشگاه.',b:'مشاهده محصولات',u:'#shop',i:['mouse','chip','keyboard'],tg:['۲۶۰۰۰ DPI','RTX 4070'],g:'linear-gradient(135deg,#2d1b7a,#4a2bb8 55%,#6d3fe0)'},
+  {t:'دنیای PlayStation',h:'کنسول و لوازم<br><span class="hl">بازی روی تلویزیون</span>',p:'کنسول، دسته و لوازم جانبی برای تجربه‌ی بازی راحت.',b:'مشاهده کنسول‌ها',u:ps,i:['headphones','brand-playstation','device-gamepad-2'],tg:['PlayStation 5','DualSense'],g:'linear-gradient(135deg,#1c1056,#3a2aa8 55%,#5b3fd1)'},
+  {t:'لپ‌تاپ',h:'برای کار، تحصیل<br><span class="hl">و بازی</span>',p:'از لپ‌تاپ اداری تا مدل‌های گیمینگ با کارت گرافیک جدا.',b:'مشاهده لپ‌تاپ‌ها',u:lp,i:['keyboard','device-laptop','mouse'],tg:['RTX 4060','۱۶ گیگابایت'],g:'linear-gradient(135deg,#251a6e,#4328a6 55%,#7a4be8)'},
+  {t:'راهنمای بازی‌ها',h:'ببین سیستمت چه<br><span class="hl">بازی‌هایی می‌کشد</span>',p:'بازی‌های محبوب را بشناسید و سخت‌افزار مناسب هر کدام را ببینید.',b:'معرفی بازی‌ها',u:'games.html',i:['device-gamepad-2','chip','device-desktop'],tg:['PC','PlayStation'],g:'linear-gradient(135deg,#2a1a78,#5530b8 55%,#8250f0)'}];
+ r.innerHTML=`<div class="slides">${S.map((x,i)=>`<div class="hero slide ${i?'':'on'}" style="background:${x.g}" aria-hidden="${i?'true':'false'}"><div><small>${x.t}</small><h1>${x.h}</h1><p>${x.p}</p><div class="row"><a class="btn" href="${x.u}">${x.b}</a>${i?'':'<a class="btn ghost" href="register.html">ساخت حساب</a>'}</div></div><div class="stage"><div class="fan"><span class="ftag" style="left:10px;top:0">${x.tg[0]}</span><span class="ftag" style="left:190px;bottom:-4px">${x.tg[1]}</span><div class="fc a"><i class="ti ti-${x.i[0]}"></i></div><div class="fc c"><i class="ti ti-${x.i[2]}"></i></div><div class="fc b"><i class="ti ti-${x.i[1]}"></i></div></div></div></div>`).join('')}</div>
+ <button class="sl-a r" aria-label="اسلاید قبلی"><i class="ti ti-chevron-right"></i></button><button class="sl-a l" aria-label="اسلاید بعدی"><i class="ti ti-chevron-left"></i></button>
+ <div class="dots">${S.map((_,i)=>`<button aria-label="اسلاید ${fa(i+1)}" class="${i?'':'on'}"></button>`).join('')}</div>`;
+ let n=0,t;const sl=r.querySelectorAll('.slide'),dt=r.querySelectorAll('.dots button');
+ const go=i=>{n=(i+S.length)%S.length;sl.forEach((x,k)=>{x.classList.toggle('on',k==n);x.setAttribute('aria-hidden',k!=n)});dt.forEach((x,k)=>x.classList.toggle('on',k==n))};
+ const stop=()=>clearInterval(t),play=()=>{stop();if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;t=setInterval(()=>go(n+1),5500)};
+ dt.forEach((x,k)=>x.onclick=()=>{go(k);play()});
+ r.querySelector('.sl-a.l').onclick=()=>{go(n+1);play()};r.querySelector('.sl-a.r').onclick=()=>{go(n-1);play()};
+ r.addEventListener('mouseenter',stop);r.addEventListener('mouseleave',play);
+ let x0=null;r.addEventListener('pointerdown',e=>{x0=e.clientX;stop()});
+ r.addEventListener('pointerup',e=>{if(x0!=null&&Math.abs(e.clientX-x0)>45)go(n+(e.clientX<x0?1:-1));x0=null;play()});
+ document.addEventListener('visibilitychange',()=>document.hidden?stop():play());
+ play()}
+async function toWebp(file){const url=URL.createObjectURL(file);
+ const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+ const s=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
+ c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);
+ const w=await new Promise(ok=>c.toBlob(ok,'image/webp',.86));
+ return w&&w.type=='image/webp'?w:await new Promise(ok=>c.toBlob(ok,'image/png'))}
+async function adminProducts(){
+ const box=$('#apBox');if(!box)return;
+ const msg=(i,t,p,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2><p>${p||''}</p>${b||''}</div>`;
+ if(!session())return msg('ti-lock','ابتدا وارد شوید','','<a class="btn" href="login.html">ورود</a>');
+ await refreshSession();
+ const a=await rest('admins?select=user_id').catch(()=>null);
+ if(!a||!a.ok||!a.d.length)return msg('ti-lock','دسترسی ندارید','این صفحه فقط برای مدیر فروشگاه است.');
+ let list=[];const cn=id=>(cats.find(c=>c.id==id)||{n:id}).n;
+ const load=async()=>{const r=await rest('products?select=*&order=created_at.desc,id.asc').catch(()=>null);
+  if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد. مرحله‌ی ساخت جدول در Supabase را انجام دهید.</p>';return}
+  list=r.d;draw()};
+ const draw=()=>{
+  box.innerHTML=`<div class="ap-bar"><button class="btn" id="apNew"><i class="ti ti-plus"></i> محصول جدید</button><button class="btn ghost" id="apImp">وارد کردن محصولات اولیه</button><span class="mu">${fa(list.length)} محصول</span></div><div id="apForm"></div>
+  <div>${list.map(p=>`<div class="ap-row ${p.active?'':'off'}"><div class="pic sm">${p.image?`<img src="${esc(p.image)}" alt="">`:`<i class="ti ${(cats.find(c=>c.id==p.cat)||{i:'ti-box'}).i}"></i>`}</div><div class="inf"><b>${esc(p.name)}</b><div class="mu">${esc(cn(p.cat))} · ${fa(p.price)} تومان${p.best?' · پرفروش':''}${p.is_new?' · جدید':''}${p.active?'':' · مخفی'}</div></div><button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button><button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست. «وارد کردن محصولات اولیه» را بزنید یا محصول جدید بسازید.</p>'}</div>`;
+  $('#apNew').onclick=()=>form();
+  $('#apImp').onclick=async()=>{if(!confirm('محصولات اولیه (فایل products.json) به دیتابیس اضافه شوند؟ محصولاتی که قبلاً هستند تغییر نمی‌کنند.'))return;
+   const d=await(await fetch('products.json')).json();
+   const rows=d.map(p=>({id:p.id,cat:p.cat,name:p.name,price:p.price,specs:p.specs||[],best:!!p.best,is_new:!!p.new,active:true}));
+   const r=await rest('products?on_conflict=id','POST',rows,'resolution=ignore-duplicates,return=minimal').catch(()=>null);
+   toast(r&&r.ok?'محصولات اولیه اضافه شد':'انجام نشد. مرحله‌ی ساخت جدول را بررسی کنید.');load()};
+  box.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>form(list.find(p=>p.id==b.dataset.e)));
+  box.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(!confirm('این محصول حذف شود؟'))return;
+   const r=await rest('products?id=eq.'+encodeURIComponent(b.dataset.d),'DELETE',null,'return=minimal').catch(()=>null);
+   toast(r&&r.ok?'حذف شد':'حذف نشد');load()})};
+ const form=p=>{const isNew=!p;p=p||{id:'p'+Date.now().toString(36),cat:'cpu',name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
+  const f=$('#apForm');
+  f.innerHTML=`<div class="apf"><h3>${isNew?'محصول جدید':'ویرایش محصول'}</h3>
+  <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
+  <label>دسته<select id="f_cat">${cats.map(c=>`<option value="${c.id}" ${c.id==p.cat?'selected':''}>${c.n}</option>`).join('')}</select></label>
+  <label>قیمت (تومان، فقط عدد)<input id="f_price" inputmode="numeric" value="${esc(p.price)}"></label>
+  <label>توضیحات<textarea id="f_desc" rows="3">${esc(p.description||'')}</textarea></label>
+  <div class="mu" style="margin-top:12px">مشخصات فنی</div><div id="f_specs"></div><button class="btn ghost" id="f_add" type="button">+ افزودن مشخصه</button>
+  <label>عکس محصول (ترجیحاً با پس‌زمینه‌ی سفید یا شفاف)<input id="f_img" type="file" accept="image/*"></label><div id="f_prev">${p.image?`<img class="prev" src="${esc(p.image)}" alt="">`:''}</div>
+  <label class="ck"><input type="checkbox" id="f_best" ${p.best?'checked':''}> پرفروش</label><label class="ck"><input type="checkbox" id="f_new" ${p.is_new?'checked':''}> جدید</label><label class="ck"><input type="checkbox" id="f_act" ${p.active?'checked':''}> نمایش در فروشگاه</label>
+  <div class="err" id="f_msg"></div><div class="ap-bar"><button class="btn" id="f_save">ذخیره</button><button class="btn ghost" id="f_cancel">انصراف</button></div></div>`;
+  const row=(l,v)=>{const d=document.createElement('div');d.className='srow';d.innerHTML='<input placeholder="عنوان، مثل رم" class="sl"><input placeholder="مقدار، مثل ۱۶ گیگابایت" class="sv"><button class="rm" type="button" aria-label="حذف"><i class="ti ti-x"></i></button>';
+   d.querySelector('.sl').value=l||'';d.querySelector('.sv').value=v||'';d.querySelector('.rm').onclick=()=>d.remove();$('#f_specs').appendChild(d)};
+  (p.specs||[]).forEach(x=>row(x[0],x[1]));if(!(p.specs||[]).length)row();
+  $('#f_add').onclick=()=>row();
+  $('#f_img').onchange=e=>{const fl=e.target.files[0];if(fl)$('#f_prev').innerHTML=`<img class="prev" src="${URL.createObjectURL(fl)}" alt="">`};
+  $('#f_cancel').onclick=()=>f.innerHTML='';
+  $('#f_save').onclick=async()=>{const m=$('#f_msg'),name=$('#f_name').value.trim(),price=parseInt(($('#f_price').value||'').replace(/[^0-9]/g,''),10);
+   if(!name)return m.textContent='نام محصول را بنویسید.';
+   if(!(price>=0))return m.textContent='قیمت را فقط با عدد بنویسید.';
+   m.style.color='';m.textContent='در حال ذخیره...';
+   let image=p.image||null;const fl=$('#f_img').files[0];
+   if(fl){try{const bl=await toWebp(fl),path=p.id+'-'+Date.now().toString(36)+(bl.type=='image/webp'?'.webp':'.png'),s=session();
+     const u=await fetch(SB+'/storage/v1/object/product-images/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+s.at,'Content-Type':bl.type,'x-upsert':'true'},body:bl});
+     if(!u.ok)return m.textContent='آپلود عکس انجام نشد. مرحله‌ی ساخت فضای عکس در Supabase را بررسی کنید.';
+     image=SB+'/storage/v1/object/public/product-images/'+path}catch(e){return m.textContent='عکس خوانده نشد. عکس دیگری امتحان کنید.'}}
+   const specs=[...f.querySelectorAll('.srow')].map(d=>[d.querySelector('.sl').value.trim(),d.querySelector('.sv').value.trim()]).filter(x=>x[0]&&x[1]);
+   const row={id:p.id,cat:$('#f_cat').value,name,price,description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
+   const r=await rest('products?on_conflict=id','POST',row,'resolution=merge-duplicates,return=minimal').catch(()=>null);
+   if(!r||!r.ok)return m.textContent='ذخیره نشد. دوباره تلاش کنید.';
+   toast('ذخیره شد');load()};
+  f.scrollIntoView({behavior:'smooth',block:'start'})};
+ load()}
 function auth(){
  const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
  if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
@@ -222,7 +315,7 @@ function auth(){
   if(!x.ok)return m(emsg(x.d));
   save(x.d);location='index.html'};
 }
-footer();header();tiles();gamesPage();auth();ordersPage();adminPage();refreshSession().then(header);
-fetch('products.json').then(r=>r.json()).then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
+footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();refreshSession().then(header);
+loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
 const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
-const b=$('#big');if(b)tilt(b,24,0);
+document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));

@@ -322,3 +322,45 @@ img,svg,video{max-width:100%}
 .ch .rm{position:absolute;top:4px;left:4px;font-size:18px}
 .cmpt .btn{padding:7px 10px;font-size:13px}
 @media(prefers-reduced-motion:reduce){.bigp img{animation:none}}
+/* ===== اسلایدر بنر + ردیف افقی دسته‌ها ===== */
+.slider{position:relative;margin:28px 0 20px}
+.slides{display:grid}
+.slide{grid-area:1/1;margin:0!important;opacity:0;visibility:hidden;transition:opacity .5s ease,visibility .5s}
+.slide.on{opacity:1;visibility:visible}
+.dots{display:flex;justify-content:center;gap:8px;margin-top:12px}
+.dots button{width:8px;height:8px;border-radius:99px;border:0;background:#4a3b8a;cursor:pointer;padding:0;transition:width .25s,background .25s}
+.dots button.on{width:26px;background:var(--lime)}
+.sl-a,.sa{display:none}
+.strip{position:relative;margin-bottom:28px}
+.tiles{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;padding:6px 2px 12px;margin-bottom:0;scrollbar-width:thin}
+.tiles a{flex:none;width:92px;scroll-snap-align:start;background:none!important;border:0!important;padding:0!important;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;text-align:center;border-radius:0}
+.tiles a:hover{transform:none}
+.tiles .cc{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--c) 18%,#1d1538);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);transition:transform .2s;overflow:hidden}
+.tiles a:hover .cc{transform:translateY(-4px)}
+.tiles .cc i{display:block;font-size:34px;color:var(--c);margin:0}
+.tiles .cc img{width:100%;height:100%;object-fit:cover;mix-blend-mode:normal;padding:0}
+@media(hover:hover) and (min-width:1000px){
+ .sl-a,.sa{display:flex;position:absolute;border-radius:50%;color:#fff;align-items:center;justify-content:center;cursor:pointer;z-index:3}
+ .sl-a{top:calc(50% - 20px);width:40px;height:40px;border:0;background:rgba(18,12,34,.55);font-size:20px}
+ .sl-a.l{left:14px}.sl-a.r{right:14px}
+ .sa{top:30px;width:36px;height:36px;border:1px solid var(--line);background:#241a4a}
+ .sa.l{left:-8px}.sa.r{right:-8px}
+}
+@media(max-width:600px){.tiles a{width:80px;font-size:12px}.tiles .cc{width:66px;height:66px}.tiles .cc i{font-size:28px}}
+/* ===== پنل مدیریت محصولات ===== */
+.ap-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.apf{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:18px}
+.apf h3{margin-bottom:4px}
+.apf label{display:block;font-size:14px;color:var(--mu);margin-top:12px}
+.apf input:not([type=checkbox]):not([type=file]),.apf textarea,.apf select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--tx);font:inherit;margin-top:4px}
+.apf input[type=file]{margin-top:6px;color:var(--mu);max-width:100%}
+.apf input:focus,.apf textarea:focus,.apf select:focus{outline:2px solid var(--p)}
+.srow{display:flex;gap:8px;margin:6px 0;align-items:center}
+.srow input{margin-top:0!important}
+.ck{display:flex!important;align-items:center;gap:8px}
+.prev{max-width:160px;border-radius:12px;background:#fff;margin-top:8px;display:block}
+.ap-row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}
+.ap-row.off{opacity:.55}
+.ap-row .inf{flex:1;min-width:0}
+.ap-row .pic.sm{width:64px;height:64px;font-size:28px;flex:none}
+.ap-row .btn{padding:7px 14px;font-size:14px}
