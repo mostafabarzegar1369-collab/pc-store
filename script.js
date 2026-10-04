@@ -288,7 +288,7 @@ async function adminProducts(){
    let image=p.image||null;const fl=$('#f_img').files[0];
    if(fl){try{const bl=await toWebp(fl),path=p.id+'-'+Date.now().toString(36)+(bl.type=='image/webp'?'.webp':'.png'),s=session();
      const u=await fetch(SB+'/storage/v1/object/product-images/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+s.at,'Content-Type':bl.type,'x-upsert':'true'},body:bl});
-     if(!u.ok)return m.textContent='آپلود عکس انجام نشد. مرحله‌ی ساخت فضای عکس در Supabase را بررسی کنید.';
+     if(!u.ok){let t='';try{t=(await u.json()).message||''}catch(e){}return m.textContent='آپلود عکس انجام نشد ('+u.status+') '+t}
      image=SB+'/storage/v1/object/public/product-images/'+path}catch(e){return m.textContent='عکس خوانده نشد. عکس دیگری امتحان کنید.'}}
    const specs=[...f.querySelectorAll('.srow')].map(d=>[d.querySelector('.sl').value.trim(),d.querySelector('.sv').value.trim()]).filter(x=>x[0]&&x[1]);
    const row={id:p.id,cat:$('#f_cat').value,name,price,description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
