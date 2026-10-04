@@ -245,3 +245,13 @@ body{background:radial-gradient(800px 380px at 90% -40px,rgba(124,77,255,.3),tra
 .bento b{font-size:17px;font-weight:700}.bento span{font-size:12px;color:#b9a4ff}
 @media(max-width:800px){.bento{grid-template-columns:1fr 1fr;grid-template-rows:none}.bento .bg{grid-column:span 2;grid-row:auto;min-height:130px}.bento a{min-height:110px}}
 @media(max-width:600px){.fan{width:272px;height:190px}.fc.a,.fc.c{width:92px;height:112px;font-size:42px}.fc.a{left:0;top:42px}.fc.c{left:180px;top:44px}.fc.b{width:118px;height:140px;font-size:58px;left:77px;top:14px}.ftag{font-size:11px}}
+/* ===== آیکون کارت گرافیک (مستقل از فونت) + فشرده‌سازی بنر در گوشی ===== */
+.ti.ti-chip{display:inline-block;width:1em;height:1em;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6.5' width='19' height='10' rx='2'/%3E%3Ccircle cx='8.5' cy='11.5' r='2.6'/%3E%3Ccircle cx='15.5' cy='11.5' r='2.6'/%3E%3Cpath d='M5 16.5v2M9 16.5v2'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6.5' width='19' height='10' rx='2'/%3E%3Ccircle cx='8.5' cy='11.5' r='2.6'/%3E%3Ccircle cx='15.5' cy='11.5' r='2.6'/%3E%3Cpath d='M5 16.5v2M9 16.5v2'/%3E%3C/svg%3E") center/contain no-repeat;vertical-align:middle}
+.ti.ti-chip::before{content:none!important}
+@media(max-width:600px){
+ .hero{padding:22px 18px;gap:14px}
+ .hero h1{font-size:26px;margin:4px 0}
+ .hero p{font-size:14px;margin-bottom:14px}
+ .hero .row{flex-wrap:nowrap}
+ .hero .btn{padding:10px 14px;font-size:14px}
+}
