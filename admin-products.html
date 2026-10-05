@@ -11,14 +11,41 @@
 <body>
 <div id="hdr"></div>
 <main class="wrap cartw">
-  <h1>مدیریت محصولات</h1>
+  <h1 id="pageTitle">مدیریت محصولات</h1>
   <div class="ap-bar">
     <a class="btn ghost" href="admin.html">سفارش‌ها</a>
-    <a class="btn ghost" href="admin-categories.html">گروه‌ها و فیلترها</a>
+    <button class="btn ghost" id="tabProd">محصولات</button>
+    <button class="btn ghost" id="tabCats">گروه‌ها و فیلترها</button>
     <a class="btn ghost" href="admin-prices.html">پیشنهاد قیمت</a>
   </div>
   <div id="apBox"></div>
+  <div id="catBox" style="display:none"></div>
 </main>
 <script src="script.js"></script>
+<script src="admin-categories.js"></script>
+<script>
+// تغییر تب بین محصولات و گروه‌ها
+document.addEventListener('DOMContentLoaded', () => {
+  const tabProd = document.getElementById('tabProd');
+  const tabCats = document.getElementById('tabCats');
+  const apBox = document.getElementById('apBox');
+  const catBox = document.getElementById('catBox');
+  const title = document.getElementById('pageTitle');
+
+  if (tabCats) tabCats.onclick = () => {
+    apBox.style.display = 'none';
+    catBox.style.display = 'block';
+    title.textContent = 'مدیریت گروه‌ها و فیلترها';
+    if (typeof categoriesPage === 'function') categoriesPage();
+  };
+
+  if (tabProd) tabProd.onclick = () => {
+    apBox.style.display = 'block';
+    catBox.style.display = 'none';
+    title.textContent = 'مدیریت محصولات';
+    if (typeof adminProducts === 'function') adminProducts();
+  };
+});
+</script>
 </body>
 </html>
