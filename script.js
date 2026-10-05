@@ -240,6 +240,34 @@ async function slider(){const r=$('#sl');if(!r)return;const cf=await siteCfg();
  r.addEventListener('pointerup',e=>{if(x0!=null&&Math.abs(e.clientX-x0)>45)go(n+(e.clientX<x0?1:-1));x0=null;play()});
  document.addEventListener('visibilitychange',()=>document.hidden?stop():play());
  play()}
+async function adminPrices(){
+ const box=$('#prBox');if(!box)return;
+ const msg=(i,t,p,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2><p>${p||''}</p>${b||''}</div>`;
+ if(!session())return msg('ti-lock','ابتدا وارد شوید','','<a class="btn" href="login.html?m=admin">ورود مدیر</a>');
+ await refreshSession();
+ const a=await rest('admins?select=user_id').catch(()=>null);
+ if(!a||!a.ok||!a.d.length)return msg('ti-lock','دسترسی ندارید','این صفحه فقط برای مدیر فروشگاه است.');
+ let L=[],nm={};
+ const load=async()=>{
+  const [x,y]=await Promise.all([rest('price_suggestions?select=*&status=eq.pending&order=created_at.desc').catch(()=>null),rest('products?select=id,name,price').catch(()=>null)]);
+  if(!x||!x.ok){box.innerHTML='<p class="err">جدول پیشنهاد قیمت پیدا نشد. مرحله‌ی SQL ربات را انجام دهید.</p>';return}
+  nm={};((y&&y.ok&&y.d)||[]).forEach(p=>nm[p.id]=p);L=x.d;draw()};
+ const done=async(s,st)=>{await rest('price_suggestions?id=eq.'+s.id,'PATCH',{status:st},'return=minimal').catch(()=>null)};
+ const apply=async s=>{const r=await rest('products?id=eq.'+encodeURIComponent(s.product_id),'PATCH',{price:s.suggested_price},'return=minimal').catch(()=>null);if(!r||!r.ok)return false;await done(s,'approved');return true};
+ const draw=()=>{
+  const safe=L.filter(s=>!s.note);
+  box.innerHTML=`<div class="ap-bar"><span class="mu">${fa(L.length)} پیشنهاد در انتظار تأیید</span>${safe.length>1?`<button class="btn" id="okAll">تأیید همه‌ی پیشنهادهای بدون هشدار (${fa(safe.length)})</button>`:''}</div>`+
+  (L.map(s=>{const p=nm[s.product_id]||{name:s.product_id},d=s.suggested_price-s.current_price,pc=Math.round(d/s.current_price*1000)/10;
+   return`<div class="sg"><div class="sg-h"><b>${esc(p.name)}</b><span class="mu">${new Date(s.created_at).toLocaleDateString('fa-IR')}</span></div>
+   <div class="sg-p"><span class="mu">${fa(s.current_price)}</span> ← <b class="${d>0?'up':'dn'}">${fa(s.suggested_price)}</b> تومان <small>(${pc>0?'+':''}${fa(pc)}٪)</small></div>
+   ${s.note?`<div class="note">${esc(s.note)}</div>`:''}
+   ${p.price!=null&&p.price!=s.current_price?'<div class="note">قیمت فعلی محصول بعد از ساخته شدن این پیشنهاد عوض شده است.</div>':''}
+   <ul class="srcs">${(s.sources||[]).map(z=>`<li>${esc(z.site||'')}: ${z.error?`<span class="err">${esc(z.error)}</span>`:''}${z.price?' '+fa(z.price)+' تومان':''} ${/^https?:\/\//i.test(z.url||'')?`<a href="${esc(z.url)}" target="_blank" rel="noopener">مشاهده</a>`:''}</li>`).join('')}</ul>
+   <div class="ap-bar"><button class="btn" data-ok="${s.id}">تأیید و اعمال</button><button class="btn ghost" data-no="${s.id}">رد</button></div></div>`}).join('')||'<p class="mu">پیشنهادی در انتظار نیست. وقتی ربات اجرا شود و قیمتی تغییر کند، اینجا نمایش داده می‌شود.</p>');
+  box.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async()=>{const s=L.find(x=>x.id==b.dataset.ok);toast(await apply(s)?'قیمت جدید اعمال شد':'اعمال نشد');load()});
+  box.querySelectorAll('[data-no]').forEach(b=>b.onclick=async()=>{await done(L.find(x=>x.id==b.dataset.no),'rejected');toast('رد شد');load()});
+  const all=$('#okAll');if(all)all.onclick=async()=>{if(!confirm('همه‌ی '+fa(safe.length)+' پیشنهاد بدون هشدار اعمال شوند؟'))return;let n=0;for(const s of safe)if(await apply(s))n++;toast(fa(n)+' قیمت اعمال شد');load()}};
+ load()}
 async function toWebp(file){const url=URL.createObjectURL(file);
  const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
  const s=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
@@ -277,13 +305,15 @@ async function adminProducts(){
   box.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(!confirm('این محصول حذف شود؟'))return;
    const r=await rest('products?id=eq.'+encodeURIComponent(b.dataset.d),'DELETE',null,'return=minimal').catch(()=>null);
    toast(r&&r.ok?'حذف شد':'حذف نشد');load()})};
- const form=p=>{const isNew=!p;p=p||{id:'p'+Date.now().toString(36),cat:'cpu',name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
+ const form=async p=>{const isNew=!p;const bo=isNew?null:await rest('product_bot?product_id=eq.'+encodeURIComponent(p.id)).catch(()=>null),bd=(bo&&bo.ok&&bo.d[0])||{};p=p||{id:'p'+Date.now().toString(36),cat:'cpu',name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
   const f=$('#apForm');
   f.innerHTML=`<div class="apf"><h3>${isNew?'محصول جدید':'ویرایش محصول'}</h3>
   <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
   <label>دسته<select id="f_cat">${cats.map(c=>`<option value="${c.id}" ${c.id==p.cat?'selected':''}>${c.n}</option>`).join('')}</select></label>
   <label>قیمت (تومان، فقط عدد)<input id="f_price" inputmode="numeric" value="${esc(p.price)}"></label>
   <label>درصد تخفیف (۰ تا ۹۰، خالی یعنی بدون تخفیف)<input id="f_disc" inputmode="numeric" value="${esc(p.discount||'')}"></label>
+  <label>لینک همین محصول در سایت‌های مقایسه (هر لینک در یک خط؛ فقط مدیر می‌بیند)<textarea id="f_links" rows="4" placeholder="https://...">${esc((bd.links||[]).join('\n'))}</textarea></label>
+  <label>کف قیمت: ربات هرگز پایین‌تر از این پیشنهاد نمی‌دهد (تومان)<input id="f_floor" inputmode="numeric" value="${esc(bd.min_price||'')}"></label>
   <label>توضیحات<textarea id="f_desc" rows="3">${esc(p.description||'')}</textarea></label>
   <div class="mu" style="margin-top:12px">مشخصات فنی</div><div id="f_specs"></div><button class="btn ghost" id="f_add" type="button">+ افزودن مشخصه</button>
   <label>عکس محصول (ترجیحاً با پس‌زمینه‌ی سفید یا شفاف)<input id="f_img" type="file" accept="image/*"></label><div id="f_prev">${p.image?`<img class="prev" src="${esc(p.image)}" alt="">`:''}</div>
@@ -308,6 +338,8 @@ async function adminProducts(){
    const row={id:p.id,cat:$('#f_cat').value,name,price,discount:Math.min(90,Math.max(0,parseInt(($('#f_disc').value||'').replace(/[^0-9]/g,''),10)||0)),description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
    const r=await rest('products?on_conflict=id','POST',row,'resolution=merge-duplicates,return=minimal').catch(()=>null);
    if(!r||!r.ok)return m.textContent='ذخیره نشد. دوباره تلاش کنید.';
+   const links=($('#f_links').value||'').split(/\s+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x)),fp=parseInt(($('#f_floor').value||'').replace(/[^0-9]/g,''),10)||null;
+   if(links.length||fp||bd.product_id){const br=await rest('product_bot?on_conflict=product_id','POST',{product_id:p.id,links,min_price:fp},'resolution=merge-duplicates,return=minimal').catch(()=>null);if(!br||!br.ok)toast('محصول ذخیره شد ولی لینک‌ها ذخیره نشد. مرحله‌ی SQL ربات را بررسی کنید.')}
    toast('ذخیره شد');load()};
   f.scrollIntoView({behavior:'smooth',block:'start'})};
  load()}
@@ -333,7 +365,7 @@ function auth(){
   if(mode=='admin'&&!adm){localStorage.removeItem('sb');return m('این حساب مدیر نیست. با حساب مدیر وارد شوید.')}
   location=mode=='admin'?'admin.html':'index.html'};
 }
-footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();refreshSession().then(header);
+footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();refreshSession().then(header);
 loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
 const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
 document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));

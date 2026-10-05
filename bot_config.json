@@ -1,0 +1,7 @@
+{
+ "min_sources": 2,
+ "min_change_pct": 1,
+ "warn_change_pct": 15,
+ "round_to": 1000,
+ "delay_seconds": 3
+}

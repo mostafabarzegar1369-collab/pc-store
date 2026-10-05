@@ -375,3 +375,11 @@ img,svg,video{max-width:100%}
 /* تخفیف */
 .old{color:var(--mu);font-size:.85em;text-decoration:line-through;margin-left:4px}
 .bj.ds{background:#e5384f}
+/* پیشنهاد قیمت */
+.sg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.sg-h{display:flex;justify-content:space-between;gap:10px}
+.sg-p{font-size:18px;margin:6px 0}
+.sg-p .up{color:#ff8da1}.sg-p .dn{color:#7be0a4}
+.srcs{list-style:none;margin:8px 0;font-size:13px;color:var(--mu)}
+.srcs li{padding:3px 0}.srcs a{color:var(--pl);margin-right:6px}
+.sg .note{margin:6px 0;padding:8px 12px;font-size:13px}
