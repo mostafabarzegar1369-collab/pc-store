@@ -18,10 +18,8 @@ const cats=[
  {id:'case',n:'قاب کیس',i:'ti-box'},{id:'cool',n:'خنک‌کننده',i:'ti-snowflake'},{id:'mon',n:'مانیتور',i:'ti-device-desktop'},
  {id:'laptop',n:'لپ‌تاپ',i:'ti-device-laptop'},{id:'ps',n:'کنسول بازی',i:'ti-brand-playstation'},
  {id:'mouse',n:'موس',i:'ti-mouse'},{id:'kb',n:'کیبورد',i:'ti-keyboard'},{id:'head',n:'هدست',i:'ti-headphones'}];
-/* عکس هر محصول: فایل images/شناسه.jpg (مثلا images/mouse1.jpg). اگر عکس نبود، آیکون نشان داده می‌شود */
 const cols=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#a78bfa','#8ea2ff','#b9a4ff'];cats.forEach((c,i)=>c.col=cols[i]);
 const subs={cpu:['Ryzen','Core'],gpu:['RTX','RX'],mb:['AM5','LGA1700'],ram:['DDR5','DDR4'],ssd:['NVMe','HDD'],psu:['۷۵۰','ماژولار'],case:['میدتاور','مینی‌تاور'],cool:['هوایی','واترکولر'],mon:['۲۴','4K'],laptop:['گیمینگ','اداری'],ps:['کنسول','دسته'],mouse:['بی‌سیم','سبک'],kb:['مکانیکال','۶۰ درصد'],head:['گیمینگ','استودیویی']};
-/* اگر برای دسته‌ای عکس گذاشتید (images/cat-شناسه.jpg)، شناسه‌اش را اینجا بنویسید. مثال: ['gpu','case'] */
 const CAT_IMAGES=[];
 let _cfg;const siteCfg=()=>_cfg||(_cfg=fetch('site.json').then(r=>r.ok?r.json():{}).catch(()=>({})));
 let products=[];
@@ -219,7 +217,6 @@ function lightbox(el){const im=el.querySelector('img');if(!im)return;
  g.addEventListener('pointermove',e=>{if(z)g.style.transformOrigin=(e.offsetX/g.offsetWidth*100)+'% '+(e.offsetY/g.offsetHeight*100)+'%'})}
 async function slider(){const r=$('#sl');if(!r)return;const cf=await siteCfg();
  const ps=qlink(cats.find(c=>c.id=='ps')),lp=qlink(cats.find(c=>c.id=='laptop'));
- /* برای اسلاید جدید یک بلوک مثل بلوک‌های زیر اضافه کنید */
  const DEF=[
   {t:'فروش ویژه قطعات گیمینگ',h:'قدرت سیستمت رو<br><span class="hl">خودت بساز</span>',p:'از کارت گرافیک تا قاب کیس، از لپ‌تاپ تا کنسول بازی؛ همه‌چیز در یک فروشگاه.',b:'مشاهده محصولات',u:'#shop',i:['mouse','chip','keyboard'],tg:['۲۶۰۰۰ DPI','RTX 4070'],g:'linear-gradient(135deg,#2d1b7a,#4a2bb8 55%,#6d3fe0)'},
   {t:'دنیای PlayStation',h:'کنسول و لوازم<br><span class="hl">بازی روی تلویزیون</span>',p:'کنسول، دسته و لوازم جانبی برای تجربه‌ی بازی راحت.',b:'مشاهده کنسول‌ها',u:ps,i:['headphones','brand-playstation','device-gamepad-2'],tg:['PlayStation 5','DualSense'],g:'linear-gradient(135deg,#1c1056,#3a2aa8 55%,#5b3fd1)'},
@@ -263,7 +260,7 @@ async function adminPrices(){
    ${s.note?`<div class="note">${esc(s.note)}</div>`:''}
    ${p.price!=null&&p.price!=s.current_price?'<div class="note">قیمت فعلی محصول بعد از ساخته شدن این پیشنهاد عوض شده است.</div>':''}
    <ul class="srcs">${(s.sources||[]).map(z=>`<li>${esc(z.site||'')}: ${z.error?`<span class="err">${esc(z.error)}</span>`:''}${z.price?' '+fa(z.price)+' تومان':''} ${/^https?:\/\//i.test(z.url||'')?`<a href="${esc(z.url)}" target="_blank" rel="noopener">مشاهده</a>`:''}</li>`).join('')}</ul>
-   <div class="ap-bar"><button class="btn" data-ok="${s.id}">تأیید و اعمال</button><button class="btn ghost" data-no="${s.id}">رد</button></div></div>`}).join('')||'<p class="mu">پیشنهادی در انتظار نیست. وقتی ربات اجرا شود و قیمتی تغییر کند، اینجا نمایش داده می‌شود.</p>');
+   <div class="ap-bar"><button class="btn" data-ok="${s.id}">تأیید و اعمال</button><button class="btn ghost" data-no="${s.id}">رد</button></div></div>`}).join('')||'<p class="mu">پیشنهادی در انتظار نیست.</p>');
   box.querySelectorAll('[data-ok]').forEach(b=>b.onclick=async()=>{const s=L.find(x=>x.id==b.dataset.ok);toast(await apply(s)?'قیمت جدید اعمال شد':'اعمال نشد');load()});
   box.querySelectorAll('[data-no]').forEach(b=>b.onclick=async()=>{await done(L.find(x=>x.id==b.dataset.no),'rejected');toast('رد شد');load()});
   const all=$('#okAll');if(all)all.onclick=async()=>{if(!confirm('همه‌ی '+fa(safe.length)+' پیشنهاد بدون هشدار اعمال شوند؟'))return;let n=0;for(const s of safe)if(await apply(s))n++;toast(fa(n)+' قیمت اعمال شد');load()}};
@@ -275,97 +272,100 @@ async function toWebp(file){const url=URL.createObjectURL(file);
  const w=await new Promise(ok=>c.toBlob(ok,'image/webp',.86));
  return w&&w.type=='image/webp'?w:await new Promise(ok=>c.toBlob(ok,'image/png'))}
 async function adminProducts(){
- const box=$('#apBox');if(!box)return;
- const msg=(i,t,p,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2><p>${p||''}</p>${b||''}</div>`;
- if(!session())return msg('ti-lock','ابتدا وارد شوید','','<a class="btn" href="login.html">ورود</a>');
- await refreshSession();
- const a=await rest('admins?select=user_id').catch(()=>null);
- if(!a||!a.ok||!a.d.length)return msg('ti-lock','دسترسی ندارید','این صفحه فقط برای مدیر فروشگاه است.');
- let list=[];const cn=id=>(cats.find(c=>c.id==id)||{n:id}).n;
- const load=async()=>{const r=await rest('products?select=*&order=created_at.desc,id.asc').catch(()=>null);
-  if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد. مرحله‌ی ساخت جدول در Supabase را انجام دهید.</p>';return}
-  list=r.d;draw()};
- const draw=()=>{
-  box.innerHTML=`<div class="ap-bar"><button class="btn" id="apNew"><i class="ti ti-plus"></i> محصول جدید</button><button class="btn ghost" id="apImp">وارد کردن محصولات اولیه</button><span class="mu">${fa(list.length)} محصول</span></div><div class="apf"><b>تخفیف گروهی</b><label>برای<select id="d_scope"><option value="all">همه محصولات</option>${cats.map(c=>`<option value="${c.id}">${c.n}</option>`).join('')}</select></label><label>درصد تخفیف (۱ تا ۹۰)<input id="d_pct" inputmode="numeric" placeholder="مثلاً ۱۰"></label><div class="ap-bar" style="margin-top:12px"><button class="btn" id="d_apply">اعمال تخفیف</button><button class="btn ghost" id="d_clear">برداشتن تخفیف</button></div><div class="err" id="d_msg"></div></div><div id="apForm"></div>
-  <div>${list.map(p=>`<div class="ap-row ${p.active?'':'off'}"><div class="pic sm">${p.image?`<img src="${esc(p.image)}" alt="">`:`<i class="ti ${(cats.find(c=>c.id==p.cat)||{i:'ti-box'}).i}"></i>`}</div><div class="inf"><b>${esc(p.name)}</b><div class="mu">${esc(cn(p.cat))} · ${fa(p.price)} تومان${p.discount?` · ${fa(p.discount)}٪ تخفیف`:''}${p.best?' · پرفروش':''}${p.is_new?' · جدید':''}${p.active?'':' · مخفی'}</div></div><button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button><button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست. «وارد کردن محصولات اولیه» را بزنید یا محصول جدید بسازید.</p>'}</div>`;
-  $('#apNew').onclick=()=>form();
-  const bulk=async pct=>{const sc=$('#d_scope').value,m=$('#d_msg'),q=sc=='all'?'id=not.is.null':'cat=eq.'+sc;
-   if(pct>0&&!confirm('تخفیف '+fa(pct)+'٪ روی '+(sc=='all'?'همه‌ی محصولات':'دسته‌ی '+cn(sc))+' اعمال شود؟'))return;
-   const r=await rest('products?'+q,'PATCH',{discount:pct},'return=minimal').catch(()=>null);
-   if(!r||!r.ok){m.style.color='';m.textContent='انجام نشد. مرحله‌ی افزودن ستون تخفیف در Supabase را بررسی کنید.';return}
-   toast(pct?'تخفیف اعمال شد':'تخفیف برداشته شد');load()};
-  $('#d_apply').onclick=()=>{const v=parseInt(($('#d_pct').value||'').replace(/[^0-9]/g,''),10);if(!(v>=1&&v<=90)){$('#d_msg').textContent='درصد را بین ۱ تا ۹۰ بنویسید.';return}bulk(v)};
-  $('#d_clear').onclick=()=>bulk(0);
-  $('#apImp').onclick=async()=>{if(!confirm('محصولات اولیه (فایل products.json) به دیتابیس اضافه شوند؟ محصولاتی که قبلاً هستند تغییر نمی‌کنند.'))return;
-   const d=await(await fetch('products.json')).json();
-   const rows=d.map(p=>({id:p.id,cat:p.cat,name:p.name,price:p.price,specs:p.specs||[],best:!!p.best,is_new:!!p.new,active:true}));
-   const r=await rest('products?on_conflict=id','POST',rows,'resolution=ignore-duplicates,return=minimal').catch(()=>null);
-   toast(r&&r.ok?'محصولات اولیه اضافه شد':'انجام نشد. مرحله‌ی ساخت جدول را بررسی کنید.');load()};
-  box.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>form(list.find(p=>p.id==b.dataset.e)));
-  box.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(!confirm('این محصول حذف شود؟'))return;
-   const r=await rest('products?id=eq.'+encodeURIComponent(b.dataset.d),'DELETE',null,'return=minimal').catch(()=>null);
-   toast(r&&r.ok?'حذف شد':'حذف نشد');load()})};
- const form=async p=>{const isNew=!p;const bo=isNew?null:await rest('product_bot?product_id=eq.'+encodeURIComponent(p.id)).catch(()=>null),bd=(bo&&bo.ok&&bo.d[0])||{};p=p||{id:'p'+Date.now().toString(36),cat:'cpu',name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
-  const f=$('#apForm');
-  f.innerHTML=`<div class="apf"><h3>${isNew?'محصول جدید':'ویرایش محصول'}</h3>
-  <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
-  <label>دسته<select id="f_cat">${cats.map(c=>`<option value="${c.id}" ${c.id==p.cat?'selected':''}>${c.n}</option>`).join('')}</select></label>
-  <label>قیمت (تومان، فقط عدد)<input id="f_price" inputmode="numeric" value="${esc(p.price)}"></label>
-  <label>درصد تخفیف (۰ تا ۹۰، خالی یعنی بدون تخفیف)<input id="f_disc" inputmode="numeric" value="${esc(p.discount||'')}"></label>
-  <label>لینک همین محصول در سایت‌های مقایسه (هر لینک در یک خط؛ فقط مدیر می‌بیند)<textarea id="f_links" rows="4" placeholder="https://...">${esc((bd.links||[]).join('\n'))}</textarea></label>
-  <label>کف قیمت: ربات هرگز پایین‌تر از این پیشنهاد نمی‌دهد (تومان)<input id="f_floor" inputmode="numeric" value="${esc(bd.min_price||'')}"></label>
-  <label>توضیحات<textarea id="f_desc" rows="3">${esc(p.description||'')}</textarea></label>
-  <div class="mu" style="margin-top:12px">مشخصات فنی</div><div id="f_specs"></div><button class="btn ghost" id="f_add" type="button">+ افزودن مشخصه</button>
-  <label>عکس محصول (ترجیحاً با پس‌زمینه‌ی سفید یا شفاف)<input id="f_img" type="file" accept="image/*"></label><div id="f_prev">${p.image?`<img class="prev" src="${esc(p.image)}" alt="">`:''}</div>
-  <label class="ck"><input type="checkbox" id="f_best" ${p.best?'checked':''}> پرفروش</label><label class="ck"><input type="checkbox" id="f_new" ${p.is_new?'checked':''}> جدید</label><label class="ck"><input type="checkbox" id="f_act" ${p.active?'checked':''}> نمایش در فروشگاه</label>
-  <div class="err" id="f_msg"></div><div class="ap-bar"><button class="btn" id="f_save">ذخیره</button><button class="btn ghost" id="f_cancel">انصراف</button></div></div>`;
-  const row=(l,v)=>{const d=document.createElement('div');d.className='srow';d.innerHTML='<input placeholder="عنوان، مثل رم" class="sl"><input placeholder="مقدار، مثل ۱۶ گیگابایت" class="sv"><button class="rm" type="button" aria-label="حذف"><i class="ti ti-x"></i></button>';
-   d.querySelector('.sl').value=l||'';d.querySelector('.sv').value=v||'';d.querySelector('.rm').onclick=()=>d.remove();$('#f_specs').appendChild(d)};
-  (p.specs||[]).forEach(x=>row(x[0],x[1]));if(!(p.specs||[]).length)row();
-  $('#f_add').onclick=()=>row();
-  $('#f_img').onchange=e=>{const fl=e.target.files[0];if(fl)$('#f_prev').innerHTML=`<img class="prev" src="${URL.createObjectURL(fl)}" alt="">`};
-  $('#f_cancel').onclick=()=>f.innerHTML='';
-  $('#f_save').onclick=async()=>{const m=$('#f_msg'),name=$('#f_name').value.trim(),price=parseInt(($('#f_price').value||'').replace(/[^0-9]/g,''),10);
-   if(!name)return m.textContent='نام محصول را بنویسید.';
-   if(!(price>=0))return m.textContent='قیمت را فقط با عدد بنویسید.';
-   m.style.color='';m.textContent='در حال ذخیره...';
-   let image=p.image||null;const fl=$('#f_img').files[0];
-   if(fl){try{m.textContent='در حال آماده‌سازی عکس...';const bl=await toWebp(fl),path=p.id+'-'+Date.now().toString(36)+(bl.type=='image/webp'?'.webp':'.png'),s=session();
-     m.textContent='در حال آپلود عکس...';const u=await fetch(SB+'/storage/v1/object/product-images/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+s.at,'Content-Type':bl.type},body:bl});
-     if(!u.ok){let t='';try{t=(await u.json()).message||''}catch(e){}return m.textContent='آپلود عکس انجام نشد ('+u.status+') '+t}
-     image=SB+'/storage/v1/object/public/product-images/'+path}catch(e){return m.textContent='عکس خوانده نشد. عکس دیگری امتحان کنید.'}}
-   const specs=[...f.querySelectorAll('.srow')].map(d=>[d.querySelector('.sl').value.trim(),d.querySelector('.sv').value.trim()]).filter(x=>x[0]&&x[1]);
-   const row={id:p.id,cat:$('#f_cat').value,name,price,discount:Math.min(90,Math.max(0,parseInt(($('#f_disc').value||'').replace(/[^0-9]/g,''),10)||0)),description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
-   const r=await rest('products?on_conflict=id','POST',row,'resolution=merge-duplicates,return=minimal').catch(()=>null);
-   if(!r||!r.ok)return m.textContent='ذخیره نشد. دوباره تلاش کنید.';
-   const links=($('#f_links').value||'').split(/\s+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x)),fp=parseInt(($('#f_floor').value||'').replace(/[^0-9]/g,''),10)||null;
-   if(links.length||fp||bd.product_id){const br=await rest('product_bot?on_conflict=product_id','POST',{product_id:p.id,links,min_price:fp},'resolution=merge-duplicates,return=minimal').catch(()=>null);if(!br||!br.ok)toast('محصول ذخیره شد ولی لینک‌ها ذخیره نشد. مرحله‌ی SQL ربات را بررسی کنید.')}
-   toast('ذخیره شد');load()};
-  f.scrollIntoView({behavior:'smooth',block:'start'})};
- load()}
-function auth(){
- let mode='user';const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
- if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
-  if(f.get('pass').length<6)return m('رمز عبور باید حداقل ۶ کاراکتر باشد.');
-  b.disabled=true;m('در حال ساخت حساب...',1);
-  const x=await sbf('/auth/v1/signup',{email:f.get('email').trim().toLowerCase(),password:f.get('pass'),data:{name:f.get('name').trim()}}).catch(()=>null);
-  b.disabled=false;
-  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
-  if(!x.ok)return m(emsg(x.d));
-  if(x.d.access_token){save(x.d);location='index.html'}else m('حساب ساخته شد. ایمیل خود را برای تأیید بررسی کنید.',1)};
- if(l){const tabs=document.querySelectorAll('.tab'),pick=t=>{mode=t.dataset.m;tabs.forEach(x=>x.classList.toggle('on',x==t));$('#loginTitle').textContent=mode=='admin'?'ورود مدیر':'ورود به حساب';$('#regLink').style.display=mode=='admin'?'none':'';$('#err').textContent=''};
-  tabs.forEach(t=>t.onclick=()=>pick(t));if(new URLSearchParams(location.search).get('m')=='admin')pick(document.querySelector('.tab[data-m="admin"]'))}
- if(l)l.onsubmit=async e=>{e.preventDefault();const f=new FormData(l),b=l.querySelector('button');
-  b.disabled=true;m('در حال ورود...',1);
-  const x=await sbf('/auth/v1/token?grant_type=password',{email:f.get('email').trim().toLowerCase(),password:f.get('pass')}).catch(()=>null);
-  b.disabled=false;
-  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
-  if(!x.ok)return m(emsg(x.d));
-  save(x.d);const adm=await markAdmin();
-  if(mode=='admin'&&!adm){localStorage.removeItem('sb');return m('این حساب مدیر نیست. با حساب مدیر وارد شوید.')}
-  location=mode=='admin'?'admin.html':'index.html'};
-}
-footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();refreshSession().then(header);
-loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
-const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
-document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
+  const box=$('#apBox');if(!box)return;
+  const msg=(i,t,p,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2><p>${p||''}</p>${b||''}</div>`;
+  if(!session())return msg('ti-lock','ابتدا وارد شوید','','<a class="btn" href="login.html">ورود</a>');
+  await refreshSession();
+  const a=await rest('admins?select=user_id').catch(()=>null);
+  if(!a||!a.ok||!a.d.length)return msg('ti-lock','دسترسی ندارید','این صفحه فقط برای مدیر فروشگاه است.');
+  let dbCats = [];
+  let dbFilters = [];
+  let dbOptions = [];
+  const loadCats = async () => {
+    const [c, f, o] = await Promise.all([
+      rest('categories?select=*&order=created_at.asc').catch(()=>null),
+      rest('filters?select=*&order=created_at.asc').catch(()=>null),
+      rest('filter_options?select=*&order=created_at.asc').catch(()=>null)
+    ]);
+    if(c && c.ok) dbCats = c.d || [];
+    if(f && f.ok) dbFilters = f.d || [];
+    if(o && o.ok) dbOptions = o.d || [];
+  };
+  let list=[];
+  const cn = id => {
+    const c = dbCats.find(x => x.id == id);
+    if (c) return c.name;
+    return (cats.find(c=>c.id==id)||{n:id}).n;
+  };
+  const load=async()=>{
+    await loadCats();
+    const r=await rest('products?select=*&order=created_at.desc,id.asc').catch(()=>null);
+    if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد. مرحله‌ی ساخت جدول در Supabase را انجام دهید.</p>';return}
+    list=r.d;draw()
+  };
+  const draw=()=>{
+    const mainCats = dbCats.filter(c => !c.parent_id);
+    box.innerHTML=`
+      <div class="ap-bar">
+        <button class="btn" id="apNew"><i class="ti ti-plus"></i> محصول جدید</button>
+        <button class="btn ghost" id="apImp">وارد کردن محصولات اولیه</button>
+        <span class="mu">${fa(list.length)} محصول</span>
+      </div>
+      <div class="apf"><b>تخفیف گروهی</b>
+        <label>برای
+          <select id="d_scope">
+            <option value="all">همه محصولات</option>
+            ${mainCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}
+          </select>
+        </label>
+        <label>درصد تخفیف (۱ تا ۹۰)<input id="d_pct" inputmode="numeric" placeholder="مثلاً ۱۰"></label>
+        <div class="ap-bar" style="margin-top:12px">
+          <button class="btn" id="d_apply">اعمال تخفیف</button>
+          <button class="btn ghost" id="d_clear">برداشتن تخفیف</button>
+        </div>
+        <div class="err" id="d_msg"></div>
+      </div>
+      <div id="apForm"></div>
+      <div>${list.map(p=>`<div class="ap-row ${p.active?'':'off'}">
+        <div class="pic sm">${p.image?`<img src="${esc(p.image)}" alt="">`:`<i class="ti ${(dbCats.find(c=>c.id==p.category_id)||cats.find(c=>c.id==p.cat)||{i:'ti-box'}).i}"></i>`}</div>
+        <div class="inf">
+          <b>${esc(p.name)}</b>
+          <div class="mu">${esc(cn(p.category_id || p.cat))} · ${fa(p.price)} تومان${p.discount?` · ${fa(p.discount)}٪ تخفیف`:''}${p.best?' · پرفروش':''}${p.is_new?' · جدید':''}${p.active?'':' · مخفی'}</div>
+        </div>
+        <button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button>
+        <button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button>
+      </div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست.</p>'}</div>`;
+    $('#apNew').onclick=()=>form();
+    const bulk=async pct=>{const sc=$('#d_scope').value,m=$('#d_msg'),q=sc=='all'?'id=not.is.null':'category_id=eq.'+sc;
+      if(pct>0&&!confirm('تخفیف '+fa(pct)+'٪ روی '+(sc=='all'?'همه‌ی محصولات':'دسته‌ی '+cn(sc))+' اعمال شود؟'))return;
+      const r=await rest('products?'+q,'PATCH',{discount:pct},'return=minimal').catch(()=>null);
+      if(!r||!r.ok){m.style.color='';m.textContent='انجام نشد.';return}
+      toast(pct?'تخفیف اعمال شد':'تخفیف برداشته شد');load()};
+    $('#d_apply').onclick=()=>{const v=parseInt(($('#d_pct').value||'').replace(/[^0-9]/g,''),10);if(!(v>=1&&v<=90)){$('#d_msg').textContent='درصد را بین ۱ تا ۹۰ بنویسید.';return}bulk(v)};
+    $('#d_clear').onclick=()=>bulk(0);
+    $('#apImp').onclick=async()=>{if(!confirm('محصولات اولیه اضافه شوند؟'))return;
+      const d=await(await fetch('products.json')).json();
+      const rows=d.map(p=>({id:p.id,cat:p.cat,name:p.name,price:p.price,specs:p.specs||[],best:!!p.best,is_new:!!p.new,active:true}));
+      const r=await rest('products?on_conflict=id','POST',rows,'resolution=ignore-duplicates,return=minimal').catch(()=>null);
+      toast(r&&r.ok?'اضافه شد':'انجام نشد');load()};
+    box.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>form(list.find(p=>p.id==b.dataset.e)));
+    box.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(!confirm('حذف شود؟'))return;
+      const r=await rest('products?id=eq.'+encodeURIComponent(b.dataset.d),'DELETE',null,'return=minimal').catch(()=>null);
+      toast(r&&r.ok?'حذف شد':'حذف نشد');load()})
+  };
+  const form=async p=>{
+    const isNew=!p;
+    const bo=isNew?null:await rest('product_bot?product_id=eq.'+encodeURIComponent(p.id)).catch(()=>null),bd=(bo&&bo.ok&&bo.d[0])||{};
+    p=p||{id:'p'+Date.now().toString(36),cat:'cpu',name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
+    const f=$('#apForm');
+    const mainCats = dbCats.filter(c => !c.parent_id);
+    const currentCatId = p.category_id || p.cat;
+    const getFiltersForCat = (cid) => {
+      const subs2 = dbCats.filter(c => c.parent_id == cid).map(c => c.id);
+      return dbFilters.filter(f2 => f2.category_id == cid || subs2.includes(f2.category_id));
+    };
+    const renderFilterOptions = (catId) => {
+      const fl = getFiltersForCat(catId);
+      const wrap = $('#f_filters');
+      if(!wrap) return;
+      if(!fl.length){ wrap.innerHTML = '<p class="mu">برای این گروه هنوز
