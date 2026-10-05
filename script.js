@@ -5,10 +5,11 @@ const SB='https://amhclwujstlipwjjahrs.supabase.co',KEY='sb_publishable_i7OICU1v
 const sbf=(p,b,t)=>fetch(SB+p,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',...(t?{Authorization:'Bearer '+t}:{})},body:JSON.stringify(b||{})}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}));
 const rest=(p,m,b,pf)=>{const s=session(),h={apikey:KEY,'Content-Type':'application/json',Prefer:pf||'return=representation'};if(s)h.Authorization='Bearer '+s.at;return fetch(SB+'/rest/v1/'+p,{method:m||'GET',headers:h,body:b?JSON.stringify(b):undefined}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}))};
 const session=()=>get('sb','null');
-const save=d=>{const u=d.user||{};localStorage.setItem('sb',JSON.stringify({name:(u.user_metadata&&u.user_metadata.name)||u.email,email:u.email,at:d.access_token,rt:d.refresh_token,exp:Date.now()+(d.expires_in||3600)*1000}))};
+const save=d=>{const u=d.user||{};localStorage.setItem('sb',JSON.stringify({name:(u.user_metadata&&u.user_metadata.name)||u.email,email:u.email,at:d.access_token,rt:d.refresh_token,exp:Date.now()+(d.expires_in||3600)*1000,adm:!!(session()||{}).adm}))};
 const logout=()=>{const s=session();if(s)sbf('/auth/v1/logout',{},s.at).catch(()=>{});localStorage.removeItem('sb');location.reload()};
 const errs={user_already_exists:'این ایمیل قبلاً ثبت شده است. وارد شوید.',invalid_credentials:'ایمیل یا رمز عبور درست نیست. دوباره بررسی کنید.',weak_password:'رمز عبور ضعیف است. رمز قوی‌تری انتخاب کنید.',email_not_confirmed:'ابتدا ایمیل خود را تأیید کنید.',over_email_send_rate_limit:'تعداد تلاش‌ها زیاد بود. چند دقیقه بعد دوباره امتحان کنید.',validation_failed:'ایمیل واردشده معتبر نیست.',signup_disabled:'ثبت‌نام فعلاً غیرفعال است.'};
 const emsg=d=>errs[d.error_code||d.code]||'مشکلی پیش آمد. دوباره تلاش کنید.';
+async function markAdmin(){const r=await rest('admins?select=user_id').catch(()=>null),adm=!!(r&&r.ok&&Array.isArray(r.d)&&r.d.length),s=session();if(s){s.adm=adm;localStorage.setItem('sb',JSON.stringify(s))}return adm}
 async function refreshSession(){const s=session();if(!s||s.exp>Date.now()+60000)return;const r=await sbf('/auth/v1/token?grant_type=refresh_token',{refresh_token:s.rt}).catch(()=>null);if(r&&r.ok)save(r.d);else if(r)localStorage.removeItem('sb')}
 const fa=n=>n.toLocaleString('fa-IR');
 const cats=[
@@ -22,6 +23,7 @@ const cols=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff
 const subs={cpu:['Ryzen','Core'],gpu:['RTX','RX'],mb:['AM5','LGA1700'],ram:['DDR5','DDR4'],ssd:['NVMe','HDD'],psu:['۷۵۰','ماژولار'],case:['میدتاور','مینی‌تاور'],cool:['هوایی','واترکولر'],mon:['۲۴','4K'],laptop:['گیمینگ','اداری'],ps:['کنسول','دسته'],mouse:['بی‌سیم','سبک'],kb:['مکانیکال','۶۰ درصد'],head:['گیمینگ','استودیویی']};
 /* اگر برای دسته‌ای عکس گذاشتید (images/cat-شناسه.jpg)، شناسه‌اش را اینجا بنویسید. مثال: ['gpu','case'] */
 const CAT_IMAGES=[];
+let _cfg;const siteCfg=()=>_cfg||(_cfg=fetch('site.json').then(r=>r.ok?r.json():{}).catch(()=>({})));
 let products=[];
 const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین.',gpu:'کارت گرافیک برای بازی در کیفیت بالا و رندر سریع.',mb:'مادربرد پایدار با امکانات اتصال کامل.',ram:'حافظه‌ی سریع برای بالا بردن سرعت سیستم.',ssd:'ذخیره‌سازی سریع و مطمئن برای سیستم و بازی‌ها.',psu:'پاور پایدار با توان مناسب برای قطعات شما.',case:'قاب کیس با جریان هوای خوب و جای کافی برای قطعات.',cool:'خنک‌کننده برای دمای پایین‌تر و صدای کمتر.',mon:'مانیتور با تصویر شفاف و نرخ بازسازی مناسب بازی.',laptop:'لپ‌تاپ مناسب کار، تحصیل و بازی.',ps:'محصولات کنسول بازی برای تجربه‌ی بازی روی تلویزیون.',mouse:'موس دقیق و سبک برای بازی و کار روزمره.',kb:'کیبورد با حس تایپ عالی و ساخت مقاوم.',head:'هدست با صدای شفاف و راحت برای ساعت‌ها استفاده.'};
 const icon=p=>cats.find(c=>c.id==p.cat).i;
@@ -43,13 +45,13 @@ function header(){
  <a href="${qlink(cats.find(c=>c.id=='laptop'))}">لپ‌تاپ</a><a href="${qlink(cats.find(c=>c.id=='ps'))}">کنسول بازی</a><a href="games.html">معرفی بازی‌ها</a></nav>
  <input class="hs" id="hs" placeholder="جستجو در محصولات" aria-label="جستجو">
  <div class="acts"><a href="cart.html" class="cartl"><i class="ti ti-shopping-cart"></i> <b id="cc">${count()}</b></a>
- ${me?`<a href="orders.html">سفارش‌ها</a><span>${esc(me.name)}</span><button class="btn ghost" id="out">خروج</button>`
+ ${me?`${me.adm?'<a href="admin.html">مدیریت</a>':''}<a href="orders.html">سفارش‌ها</a><span>${esc(me.name)}</span><button class="btn ghost" id="out">خروج</button>`
  :`<a class="btn ghost" href="login.html">ورود</a><a class="btn" href="register.html">ثبت‌نام</a>`}</div></div></header>
  <div class="ov" id="ov"></div>
  <aside class="drawer" id="dr" aria-label="منو"><div class="dh">${logo()}<button class="x" id="dx" aria-label="بستن منو"><i class="ti ti-x"></i></button></div>
  <div class="dq"><a href="index.html"><i class="ti ti-home"></i>خانه</a><a href="games.html"><i class="ti ti-device-gamepad-2"></i>معرفی بازی‌ها</a>
  <a href="cart.html"><i class="ti ti-shopping-cart"></i>سبد خرید<b class="bdg">${count()}</b></a>
- ${me?`<a href="orders.html"><i class="ti ti-package"></i>سفارش‌های من</a><button class="qb" id="out2"><i class="ti ti-logout"></i>خروج (${esc(me.name)})</button>`
+ ${me?`${me.adm?'<a href="admin.html"><i class="ti ti-shield-lock"></i>پنل مدیریت</a>':''}<a href="orders.html"><i class="ti ti-package"></i>سفارش‌های من</a><button class="qb" id="out2"><i class="ti ti-logout"></i>خروج (${esc(me.name)})</button>`
  :`<a href="login.html"><i class="ti ti-login"></i>ورود</a><a href="register.html"><i class="ti ti-user-plus"></i>ثبت‌نام</a>`}</div>
  <div class="dt">محصولات</div>
  ${cats.map(c=>`<div class="acc"><button class="ah" style="--c:${c.col}"><span class="ic"><i class="ti ${c.i}"></i></span>${c.n}<i class="ti ti-chevron-down ch"></i></button>
@@ -159,8 +161,9 @@ async function loadProducts(){
  return (await fetch('products.json')).json()}
 function bestRail(){const b=$('#best');if(!b)return;
  b.innerHTML=products.filter(p=>p.best).map((p,i)=>{const c=cats.find(x=>x.id==p.cat);return`<a class="bc" href="product.html?id=${p.id}" style="--c:${c.col}"><span class="rk">${fa(i+1)}</span><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3><div class="price">${fa(p.price)} تومان</div></a>`}).join('')}
-function tiles(){const t=$('#tiles');if(!t)return;
- t.innerHTML=cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><span class="cc">${CAT_IMAGES.includes(c.id)?`<img src="images/cat-${c.id}.jpg" data-id="cat-${c.id}" data-ic="${c.i}" alt="" onerror="imgFail(this)">`:`<i class="ti ${c.i}"></i>`}</span>${c.n}</a>`).join('');
+async function tiles(){const t=$('#tiles');if(!t)return;
+ const cf=await siteCfg(),L=[...CAT_IMAGES,...(Array.isArray(cf.catImages)?cf.catImages:[])];
+ t.innerHTML=cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><span class="cc">${L.includes(c.id)?`<img src="images/cat-${c.id}.jpg" data-id="cat-${c.id}" data-ic="${c.i}" alt="" onerror="imgFail(this)">`:`<i class="ti ${c.i}"></i>`}</span>${c.n}</a>`).join('');
  document.querySelectorAll('.strip .sa').forEach(b=>b.onclick=()=>t.scrollBy({left:b.classList.contains('l')?-320:320,behavior:'smooth'}))}
 async function gamesPage(){
  const box=$('#gBox');if(!box)return;
@@ -213,15 +216,17 @@ function lightbox(el){const im=el.querySelector('img');if(!im)return;
  o.onclick=e=>{if(e.target==o)close()};o.querySelector('.lbx').onclick=close;
  g.onclick=()=>{z=!z;g.classList.toggle('z',z)};
  g.addEventListener('pointermove',e=>{if(z)g.style.transformOrigin=(e.offsetX/g.offsetWidth*100)+'% '+(e.offsetY/g.offsetHeight*100)+'%'})}
-function slider(){const r=$('#sl');if(!r)return;
+async function slider(){const r=$('#sl');if(!r)return;const cf=await siteCfg();
  const ps=qlink(cats.find(c=>c.id=='ps')),lp=qlink(cats.find(c=>c.id=='laptop'));
  /* برای اسلاید جدید یک بلوک مثل بلوک‌های زیر اضافه کنید */
- const S=[
+ const DEF=[
   {t:'فروش ویژه قطعات گیمینگ',h:'قدرت سیستمت رو<br><span class="hl">خودت بساز</span>',p:'از کارت گرافیک تا قاب کیس، از لپ‌تاپ تا کنسول بازی؛ همه‌چیز در یک فروشگاه.',b:'مشاهده محصولات',u:'#shop',i:['mouse','chip','keyboard'],tg:['۲۶۰۰۰ DPI','RTX 4070'],g:'linear-gradient(135deg,#2d1b7a,#4a2bb8 55%,#6d3fe0)'},
   {t:'دنیای PlayStation',h:'کنسول و لوازم<br><span class="hl">بازی روی تلویزیون</span>',p:'کنسول، دسته و لوازم جانبی برای تجربه‌ی بازی راحت.',b:'مشاهده کنسول‌ها',u:ps,i:['headphones','brand-playstation','device-gamepad-2'],tg:['PlayStation 5','DualSense'],g:'linear-gradient(135deg,#1c1056,#3a2aa8 55%,#5b3fd1)'},
   {t:'لپ‌تاپ',h:'برای کار، تحصیل<br><span class="hl">و بازی</span>',p:'از لپ‌تاپ اداری تا مدل‌های گیمینگ با کارت گرافیک جدا.',b:'مشاهده لپ‌تاپ‌ها',u:lp,i:['keyboard','device-laptop','mouse'],tg:['RTX 4060','۱۶ گیگابایت'],g:'linear-gradient(135deg,#251a6e,#4328a6 55%,#7a4be8)'},
   {t:'راهنمای بازی‌ها',h:'ببین سیستمت چه<br><span class="hl">بازی‌هایی می‌کشد</span>',p:'بازی‌های محبوب را بشناسید و سخت‌افزار مناسب هر کدام را ببینید.',b:'معرفی بازی‌ها',u:'games.html',i:['device-gamepad-2','chip','device-desktop'],tg:['PC','PlayStation'],g:'linear-gradient(135deg,#2a1a78,#5530b8 55%,#8250f0)'}];
- r.innerHTML=`<div class="slides">${S.map((x,i)=>`<div class="hero slide ${i?'':'on'}" style="background:${x.g}" aria-hidden="${i?'true':'false'}"><div><small>${x.t}</small><h1>${x.h}</h1><p>${x.p}</p><div class="row"><a class="btn" href="${x.u}">${x.b}</a>${i?'':'<a class="btn ghost" href="register.html">ساخت حساب</a>'}</div></div><div class="stage"><div class="fan"><span class="ftag" style="left:10px;top:0">${x.tg[0]}</span><span class="ftag" style="left:190px;bottom:-4px">${x.tg[1]}</span><div class="fc a"><i class="ti ti-${x.i[0]}"></i></div><div class="fc c"><i class="ti ti-${x.i[2]}"></i></div><div class="fc b"><i class="ti ti-${x.i[1]}"></i></div></div></div></div>`).join('')}</div>
+ const S=Array.isArray(cf.slides)&&cf.slides.length?cf.slides.map(x=>({t:'',h:'',p:'',b:'مشاهده',u:'#shop',i:['mouse','chip','keyboard'],tg:['',''],g:DEF[0].g,...x})):DEF;
+ const bgOf=x=>x.bgimg?`linear-gradient(90deg,rgba(18,12,34,.88),rgba(18,12,34,.3)),url('${esc(x.bgimg)}') center/cover`:x.g,hOf=x=>x.hl?esc(x.h)+'<br><span class="hl">'+esc(x.hl)+'</span>':x.h;
+ r.innerHTML=`<div class="slides">${S.map((x,i)=>`<div class="hero slide ${i?'':'on'}" style="background:${bgOf(x)}" aria-hidden="${i?'true':'false'}"><div><small>${esc(x.t)}</small><h1>${hOf(x)}</h1><p>${esc(x.p)}</p><div class="row"><a class="btn" href="${esc(x.u)}">${esc(x.b)}</a>${i?'':'<a class="btn ghost" href="register.html">ساخت حساب</a>'}</div></div><div class="stage">${x.img?`<img class="simg" src="${esc(x.img)}" alt="" loading="lazy">`:x.bgimg?'':`<div class="fan">${x.tg[0]?`<span class="ftag" style="left:10px;top:0">${esc(x.tg[0])}</span>`:''}${x.tg[1]?`<span class="ftag" style="left:190px;bottom:-4px">${esc(x.tg[1])}</span>`:''}<div class="fc a"><i class="ti ti-${esc(x.i[0])}"></i></div><div class="fc c"><i class="ti ti-${esc(x.i[2])}"></i></div><div class="fc b"><i class="ti ti-${esc(x.i[1])}"></i></div></div>`}</div></div>`).join('')}</div>
  <button class="sl-a r" aria-label="اسلاید قبلی"><i class="ti ti-chevron-right"></i></button><button class="sl-a l" aria-label="اسلاید بعدی"><i class="ti ti-chevron-left"></i></button>
  <div class="dots">${S.map((_,i)=>`<button aria-label="اسلاید ${fa(i+1)}" class="${i?'':'on'}"></button>`).join('')}</div>`;
  let n=0,t;const sl=r.querySelectorAll('.slide'),dt=r.querySelectorAll('.dots button');
@@ -286,8 +291,8 @@ async function adminProducts(){
    if(!(price>=0))return m.textContent='قیمت را فقط با عدد بنویسید.';
    m.style.color='';m.textContent='در حال ذخیره...';
    let image=p.image||null;const fl=$('#f_img').files[0];
-   if(fl){try{const bl=await toWebp(fl),path=p.id+'-'+Date.now().toString(36)+(bl.type=='image/webp'?'.webp':'.png'),s=session();
-     const u=await fetch(SB+'/storage/v1/object/product-images/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+s.at,'Content-Type':bl.type,'x-upsert':'true'},body:bl});
+   if(fl){try{m.textContent='در حال آماده‌سازی عکس...';const bl=await toWebp(fl),path=p.id+'-'+Date.now().toString(36)+(bl.type=='image/webp'?'.webp':'.png'),s=session();
+     m.textContent='در حال آپلود عکس...';const u=await fetch(SB+'/storage/v1/object/product-images/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+s.at,'Content-Type':bl.type},body:bl});
      if(!u.ok){let t='';try{t=(await u.json()).message||''}catch(e){}return m.textContent='آپلود عکس انجام نشد ('+u.status+') '+t}
      image=SB+'/storage/v1/object/public/product-images/'+path}catch(e){return m.textContent='عکس خوانده نشد. عکس دیگری امتحان کنید.'}}
    const specs=[...f.querySelectorAll('.srow')].map(d=>[d.querySelector('.sl').value.trim(),d.querySelector('.sv').value.trim()]).filter(x=>x[0]&&x[1]);
@@ -298,7 +303,7 @@ async function adminProducts(){
   f.scrollIntoView({behavior:'smooth',block:'start'})};
  load()}
 function auth(){
- const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
+ let mode='user';const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
  if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
   if(f.get('pass').length<6)return m('رمز عبور باید حداقل ۶ کاراکتر باشد.');
   b.disabled=true;m('در حال ساخت حساب...',1);
@@ -307,13 +312,17 @@ function auth(){
   if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
   if(!x.ok)return m(emsg(x.d));
   if(x.d.access_token){save(x.d);location='index.html'}else m('حساب ساخته شد. ایمیل خود را برای تأیید بررسی کنید.',1)};
+ if(l){const tabs=document.querySelectorAll('.tab'),pick=t=>{mode=t.dataset.m;tabs.forEach(x=>x.classList.toggle('on',x==t));$('#loginTitle').textContent=mode=='admin'?'ورود مدیر':'ورود به حساب';$('#regLink').style.display=mode=='admin'?'none':'';$('#err').textContent=''};
+  tabs.forEach(t=>t.onclick=()=>pick(t));if(new URLSearchParams(location.search).get('m')=='admin')pick(document.querySelector('.tab[data-m="admin"]'))}
  if(l)l.onsubmit=async e=>{e.preventDefault();const f=new FormData(l),b=l.querySelector('button');
   b.disabled=true;m('در حال ورود...',1);
   const x=await sbf('/auth/v1/token?grant_type=password',{email:f.get('email').trim().toLowerCase(),password:f.get('pass')}).catch(()=>null);
   b.disabled=false;
   if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
   if(!x.ok)return m(emsg(x.d));
-  save(x.d);location='index.html'};
+  save(x.d);const adm=await markAdmin();
+  if(mode=='admin'&&!adm){localStorage.removeItem('sb');return m('این حساب مدیر نیست. با حساب مدیر وارد شوید.')}
+  location=mode=='admin'?'admin.html':'index.html'};
 }
 footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();refreshSession().then(header);
 loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});

@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ورود</title><link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"><link rel="stylesheet" href="style.css"></head><body><div id="hdr"></div>
-<div class="auth"><h1>ورود به حساب</h1>
+<div class="auth"><div class="tabs"><button type="button" class="tab on" data-m="user">ورود کاربر</button><button type="button" class="tab" data-m="admin">ورود مدیر</button></div><h1 id="loginTitle">ورود به حساب</h1>
 <form id="logForm"><label>ایمیل<input name="email" type="email" required placeholder="name@example.com"></label>
 <label>رمز عبور<input name="pass" type="password" required></label>
 <div class="err" id="err"></div><button class="btn">ورود</button></form>
-<div class="sw">حساب ندارید؟ <a href="register.html">ثبت‌نام</a></div></div>
+<div class="sw" id="regLink">حساب ندارید؟ <a href="register.html">ثبت‌نام</a></div></div>
 <script src="script.js"></script></body></html>
