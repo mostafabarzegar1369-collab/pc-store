@@ -372,3 +372,6 @@ img,svg,video{max-width:100%}
 .tabs{display:flex;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:16px}
 .tab{flex:1;border:0;background:none;color:var(--mu);font:inherit;padding:9px;border-radius:9px;cursor:pointer}
 .tab.on{background:var(--p);color:#fff}
+/* تخفیف */
+.old{color:var(--mu);font-size:.85em;text-decoration:line-through;margin-left:4px}
+.bj.ds{background:#e5384f}

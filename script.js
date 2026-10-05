@@ -82,7 +82,7 @@ function shop(){
  $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${c.n}</button>`).join('');
  box.innerHTML=cats.filter(c=>cat=='all'||cat==c.id).map(c=>{
   const l=products.filter(p=>p.cat==c.id&&p.name.includes(q));if(!l.length)return'';
-  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="افزودن به مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${fa(p.price)} تومان</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
+  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="افزودن به مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${priceTxt(p)}</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
  box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
  box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
@@ -96,10 +96,10 @@ function productPage(){
  const c=cats.find(x=>x.id==p.cat),rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
  box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#${c.id}">${c.n}</a> / ${esc(p.name)}</div>
  <div class="pd"><div class="pstage"><div class="pic bigp" id="pimg" style="--c:${c.col}">${pic(p)}</div><div class="pshadow"></div><small class="hint">لمس کنید یا نگه دارید تا بزرگ شود</small></div>
- <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${fa(p.price)} تومان</div><p class="desc">${esc(p.desc||descs[p.cat])}</p>
+ <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${priceTxt(p)}</div><p class="desc">${esc(p.desc||descs[p.cat])}</p>
  <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
  <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><button class="btn ghost" id="cmpp" data-id="${p.id}"><i class="ti ti-arrows-diff"></i> مقایسه</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div></div></div>
- ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${esc(r.name)}</h3></a><div class="price">${fa(r.price)} تومان</div></div>`).join('')}</div>`:''}`;
+ ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${esc(r.name)}</h3></a><div class="price">${priceTxt(r)}</div></div>`).join('')}</div>`:''}`;
  $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
  tilt($('#pimg'),16,0);zoomable($('#pimg'));$('#cmpp').onclick=()=>toggleCmp(p.id);syncCmp();box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
 }
@@ -109,7 +109,7 @@ function cartPage(){
  if(!ids.length){box.innerHTML='<div class="empty"><i class="ti ti-shopping-cart-off"></i><h2>سبد خرید شما خالی است</h2><p>محصولی انتخاب کنید تا اینجا نمایش داده شود.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';return}
  let total=0;
  box.innerHTML=ids.map(id=>{const p=products.find(x=>x.id==id),n=c[id];total+=p.price*n;
-  return`<div class="row"><div class="pic sm">${pic(p)}</div><div class="inf"><h3>${esc(p.name)}</h3><div class="price">${fa(p.price)} تومان</div></div>
+  return`<div class="row"><div class="pic sm">${pic(p)}</div><div class="inf"><h3>${esc(p.name)}</h3><div class="price">${priceTxt(p)}</div></div>
   <div class="qty"><button data-a="+" data-id="${id}" aria-label="افزایش">+</button><b>${fa(n)}</b><button data-a="-" data-id="${id}" aria-label="کاهش">−</button></div>
   <div class="lt">${fa(p.price*n)}</div><button class="rm" data-a="x" data-id="${id}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`}).join('')+
  `<div class="sum"><span>جمع کل</span><b>${fa(total)} تومان</b></div>
@@ -154,13 +154,14 @@ async function adminPage(){
   const u=await rest('orders?id=eq.'+x.dataset.id,'PATCH',{status:x.value}).catch(()=>null);
   toast(u&&u.ok&&u.d.length?'وضعیت سفارش ذخیره شد':'ذخیره نشد. دوباره تلاش کنید.')});
 }
-const normP=d=>{if(!d||!/^[\w-]+$/.test(d.id)||!cats.some(c=>c.id==d.cat))return null;return{id:d.id,cat:d.cat,name:String(d.name||''),price:+d.price||0,specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''}};
+const priceTxt=p=>(p.old?`<s class="old">${fa(p.old)}</s> `:'')+fa(p.price)+' تومان';
+const normP=d=>{if(!d||!/^[\w-]+$/.test(d.id)||!cats.some(c=>c.id==d.cat))return null;return{id:d.id,cat:d.cat,name:String(d.name||''),price:(()=>{const b=+d.price||0,c=Math.min(90,Math.max(0,parseInt(d.discount)||0));return c?Math.max(0,Math.round(b*(100-c)/100/1000)*1000):b})(),old:(()=>{const b=+d.price||0,c=Math.min(90,Math.max(0,parseInt(d.discount)||0));return c?b:0})(),disc:Math.min(90,Math.max(0,parseInt(d.discount)||0)),specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''}};
 async function loadProducts(){
  try{const r=await fetch(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}});
   if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length)return d.map(normP).filter(Boolean)}}catch(e){}
  return (await fetch('products.json')).json()}
 function bestRail(){const b=$('#best');if(!b)return;
- b.innerHTML=products.filter(p=>p.best).map((p,i)=>{const c=cats.find(x=>x.id==p.cat);return`<a class="bc" href="product.html?id=${p.id}" style="--c:${c.col}"><span class="rk">${fa(i+1)}</span><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3><div class="price">${fa(p.price)} تومان</div></a>`}).join('')}
+ b.innerHTML=products.filter(p=>p.best).map((p,i)=>{const c=cats.find(x=>x.id==p.cat);return`<a class="bc" href="product.html?id=${p.id}" style="--c:${c.col}"><span class="rk">${fa(i+1)}</span><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3><div class="price">${priceTxt(p)}</div></a>`}).join('')}
 async function tiles(){const t=$('#tiles');if(!t)return;
  const cf=await siteCfg(),L=[...CAT_IMAGES,...(Array.isArray(cf.catImages)?cf.catImages:[])];
  t.innerHTML=cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><span class="cc">${L.includes(c.id)?`<img src="images/cat-${c.id}.jpg" data-id="cat-${c.id}" data-ic="${c.i}" alt="" onerror="imgFail(this)">`:`<i class="ti ${c.i}"></i>`}</span>${c.n}</a>`).join('');
@@ -193,7 +194,7 @@ function comparePage(){const box=$('#cmpBox');if(!box)return;
  const L=ids.map(id=>products.find(p=>p.id==id)),labels=[...new Set(L.flatMap(p=>(p.specs||[]).map(x=>x[0])))],low=Math.min(...L.map(p=>p.price));
  const val=(p,l)=>{const x=(p.specs||[]).find(y=>y[0]==l);return x?x[1]:'—'};
  box.innerHTML=`<div class="cmpw"><table class="cmpt"><tr><th></th>${L.map(p=>`<td class="ch" style="--c:${cats.find(c=>c.id==p.cat).col}"><div class="pic sm">${pic(p)}</div><a href="product.html?id=${p.id}"><b>${esc(p.name)}</b></a><button class="rm" data-id="${p.id}" aria-label="حذف از مقایسه"><i class="ti ti-x"></i></button></td>`).join('')}</tr>
- <tr><th>قیمت</th>${L.map(p=>`<td class="${p.price==low?'best':''}">${fa(p.price)} تومان${p.price==low?'<small>کم‌ترین قیمت</small>':''}</td>`).join('')}</tr>
+ <tr><th>قیمت</th>${L.map(p=>`<td class="${p.price==low?'best':''}">${priceTxt(p)}${p.price==low?'<small>کم‌ترین قیمت</small>':''}</td>`).join('')}</tr>
  ${labels.map(l=>{const v=L.map(p=>val(p,l));return`<tr class="${new Set(v).size>1?'diff':''}"><th>${esc(l)}</th>${v.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`}).join('')}
  <tr><th></th>${L.map(p=>`<td><button class="btn add2" data-id="${p.id}">افزودن به سبد</button></td>`).join('')}</tr></table></div>
  <p class="mu">ردیف‌هایی که مقدارشان فرق دارد رنگی هستند.</p><button class="btn ghost" id="cl">پاک کردن مقایسه</button>`;
@@ -257,9 +258,16 @@ async function adminProducts(){
   if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد. مرحله‌ی ساخت جدول در Supabase را انجام دهید.</p>';return}
   list=r.d;draw()};
  const draw=()=>{
-  box.innerHTML=`<div class="ap-bar"><button class="btn" id="apNew"><i class="ti ti-plus"></i> محصول جدید</button><button class="btn ghost" id="apImp">وارد کردن محصولات اولیه</button><span class="mu">${fa(list.length)} محصول</span></div><div id="apForm"></div>
-  <div>${list.map(p=>`<div class="ap-row ${p.active?'':'off'}"><div class="pic sm">${p.image?`<img src="${esc(p.image)}" alt="">`:`<i class="ti ${(cats.find(c=>c.id==p.cat)||{i:'ti-box'}).i}"></i>`}</div><div class="inf"><b>${esc(p.name)}</b><div class="mu">${esc(cn(p.cat))} · ${fa(p.price)} تومان${p.best?' · پرفروش':''}${p.is_new?' · جدید':''}${p.active?'':' · مخفی'}</div></div><button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button><button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست. «وارد کردن محصولات اولیه» را بزنید یا محصول جدید بسازید.</p>'}</div>`;
+  box.innerHTML=`<div class="ap-bar"><button class="btn" id="apNew"><i class="ti ti-plus"></i> محصول جدید</button><button class="btn ghost" id="apImp">وارد کردن محصولات اولیه</button><span class="mu">${fa(list.length)} محصول</span></div><div class="apf"><b>تخفیف گروهی</b><label>برای<select id="d_scope"><option value="all">همه محصولات</option>${cats.map(c=>`<option value="${c.id}">${c.n}</option>`).join('')}</select></label><label>درصد تخفیف (۱ تا ۹۰)<input id="d_pct" inputmode="numeric" placeholder="مثلاً ۱۰"></label><div class="ap-bar" style="margin-top:12px"><button class="btn" id="d_apply">اعمال تخفیف</button><button class="btn ghost" id="d_clear">برداشتن تخفیف</button></div><div class="err" id="d_msg"></div></div><div id="apForm"></div>
+  <div>${list.map(p=>`<div class="ap-row ${p.active?'':'off'}"><div class="pic sm">${p.image?`<img src="${esc(p.image)}" alt="">`:`<i class="ti ${(cats.find(c=>c.id==p.cat)||{i:'ti-box'}).i}"></i>`}</div><div class="inf"><b>${esc(p.name)}</b><div class="mu">${esc(cn(p.cat))} · ${fa(p.price)} تومان${p.discount?` · ${fa(p.discount)}٪ تخفیف`:''}${p.best?' · پرفروش':''}${p.is_new?' · جدید':''}${p.active?'':' · مخفی'}</div></div><button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button><button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست. «وارد کردن محصولات اولیه» را بزنید یا محصول جدید بسازید.</p>'}</div>`;
   $('#apNew').onclick=()=>form();
+  const bulk=async pct=>{const sc=$('#d_scope').value,m=$('#d_msg'),q=sc=='all'?'id=not.is.null':'cat=eq.'+sc;
+   if(pct>0&&!confirm('تخفیف '+fa(pct)+'٪ روی '+(sc=='all'?'همه‌ی محصولات':'دسته‌ی '+cn(sc))+' اعمال شود؟'))return;
+   const r=await rest('products?'+q,'PATCH',{discount:pct},'return=minimal').catch(()=>null);
+   if(!r||!r.ok){m.style.color='';m.textContent='انجام نشد. مرحله‌ی افزودن ستون تخفیف در Supabase را بررسی کنید.';return}
+   toast(pct?'تخفیف اعمال شد':'تخفیف برداشته شد');load()};
+  $('#d_apply').onclick=()=>{const v=parseInt(($('#d_pct').value||'').replace(/[^0-9]/g,''),10);if(!(v>=1&&v<=90)){$('#d_msg').textContent='درصد را بین ۱ تا ۹۰ بنویسید.';return}bulk(v)};
+  $('#d_clear').onclick=()=>bulk(0);
   $('#apImp').onclick=async()=>{if(!confirm('محصولات اولیه (فایل products.json) به دیتابیس اضافه شوند؟ محصولاتی که قبلاً هستند تغییر نمی‌کنند.'))return;
    const d=await(await fetch('products.json')).json();
    const rows=d.map(p=>({id:p.id,cat:p.cat,name:p.name,price:p.price,specs:p.specs||[],best:!!p.best,is_new:!!p.new,active:true}));
@@ -275,6 +283,7 @@ async function adminProducts(){
   <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
   <label>دسته<select id="f_cat">${cats.map(c=>`<option value="${c.id}" ${c.id==p.cat?'selected':''}>${c.n}</option>`).join('')}</select></label>
   <label>قیمت (تومان، فقط عدد)<input id="f_price" inputmode="numeric" value="${esc(p.price)}"></label>
+  <label>درصد تخفیف (۰ تا ۹۰، خالی یعنی بدون تخفیف)<input id="f_disc" inputmode="numeric" value="${esc(p.discount||'')}"></label>
   <label>توضیحات<textarea id="f_desc" rows="3">${esc(p.description||'')}</textarea></label>
   <div class="mu" style="margin-top:12px">مشخصات فنی</div><div id="f_specs"></div><button class="btn ghost" id="f_add" type="button">+ افزودن مشخصه</button>
   <label>عکس محصول (ترجیحاً با پس‌زمینه‌ی سفید یا شفاف)<input id="f_img" type="file" accept="image/*"></label><div id="f_prev">${p.image?`<img class="prev" src="${esc(p.image)}" alt="">`:''}</div>
@@ -296,7 +305,7 @@ async function adminProducts(){
      if(!u.ok){let t='';try{t=(await u.json()).message||''}catch(e){}return m.textContent='آپلود عکس انجام نشد ('+u.status+') '+t}
      image=SB+'/storage/v1/object/public/product-images/'+path}catch(e){return m.textContent='عکس خوانده نشد. عکس دیگری امتحان کنید.'}}
    const specs=[...f.querySelectorAll('.srow')].map(d=>[d.querySelector('.sl').value.trim(),d.querySelector('.sv').value.trim()]).filter(x=>x[0]&&x[1]);
-   const row={id:p.id,cat:$('#f_cat').value,name,price,description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
+   const row={id:p.id,cat:$('#f_cat').value,name,price,discount:Math.min(90,Math.max(0,parseInt(($('#f_disc').value||'').replace(/[^0-9]/g,''),10)||0)),description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
    const r=await rest('products?on_conflict=id','POST',row,'resolution=merge-duplicates,return=minimal').catch(()=>null);
    if(!r||!r.ok)return m.textContent='ذخیره نشد. دوباره تلاش کنید.';
    toast('ذخیره شد');load()};
