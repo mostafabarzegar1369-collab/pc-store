@@ -116,7 +116,9 @@ async function shop(){
  // DEBUG - موقت
 let dbg=document.getElementById('dbgBox');
 if(!dbg){dbg=document.createElement('div');dbg.id='dbgBox';dbg.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;z-index:99999;font-size:12px;padding:8px;font-family:monospace;direction:ltr';document.body.appendChild(dbg)}
-dbg.innerHTML='products: '+products.length+' | cats: '+cats.length+' | cat: '+cat+' | sample product: '+(products[0]?JSON.stringify({id:products[0].id,cat:products[0].cat,category_id:products[0].category_id}):'NONE');
+const vc=cats.filter(c=>cat=='all'||cat==c.id);
+const p0=products[0];
+dbg.innerHTML='P:'+products.length+' C:'+cats.length+' cat:'+cat+' vc:'+vc.map(c=>c.id+'|dbId:'+c.dbId).join(',')+' p0cat:'+(p0?p0.cat:'-')+' p0cid:'+(p0?p0.category_id:'-')+' match:'+(p0?String(p0.category_id)==String(vc[0]&&vc[0].dbId):'?');
   const urlCat=new URLSearchParams(location.search).get('cat');
 if(urlCat && cats.some(c=>c.id==urlCat)){
   cat=urlCat;
