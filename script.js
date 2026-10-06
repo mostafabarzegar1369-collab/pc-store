@@ -185,7 +185,10 @@ if(selectedOpts.length){
   if(!visibleCats.length){box.innerHTML='<p>محصولی پیدا نشد.</p>';return}
 
   box.innerHTML=visibleCats.map(c=>{
-  let l=products.filter(p=>p.cat==c.id && (q?p.name.includes(q):true));
+  let l=products.filter(p=>{
+  const pCat = p.category_id ? String(p.category_id) : String(p.cat);
+  return pCat == String(c.dbId) && (q?p.name.includes(q):true);
+});
   if(filteredProductIds && filteredProductIds.size>0){
     l=l.filter(p=>filteredProductIds.has(String(p.id)));
   }
