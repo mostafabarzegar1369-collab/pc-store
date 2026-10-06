@@ -75,16 +75,114 @@ function tilt(el,deg,lift){if(matchMedia('(hover:none)').matches)return;
  el.addEventListener('mouseleave',()=>el.style.transform='');
 }
 const P=new URLSearchParams(location.search);let cat=cats.some(c=>c.id==P.get('cat'))?P.get('cat'):'all',q=(P.get('q')||'').trim();
-function shop(){
- const box=$('#shop');if(!box)return;
- $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${c.n}</button>`).join('');
- box.innerHTML=cats.filter(c=>cat=='all'||cat==c.id).map(c=>{
-  const l=products.filter(p=>p.cat==c.id&&p.name.includes(q));if(!l.length)return'';
-  return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="افزودن به مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${priceTxt(p)}</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>'}).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
- box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
- box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
- box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
- $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{cat=b.dataset.c;shop()});
+async function shop(){
+  const box=$('#shop');if(!box)return;
+
+  // فیلترهای انتخاب‌شده (توی URL نگه می‌داریم)
+  const params = new URLSearchParams(location.search);
+  const selectedFilters = {};
+  params.forEach((v,k)=>{ if(k.startsWith('f_')) selectedFilters[k.substring(2)] = v; });
+
+  // خوندن گروه‌ها و فیلترها از دیتابیس
+  let dbCats = [], dbFilters = [], dbOptions = [], dbValues = [];
+  try {
+    const [c,f,o] = await Promise.all([
+      fetch(SB+'/rest/v1/categories?select=*&order=created_at.asc',{headers:{apikey:KEY}}).then(r=>r.ok?r.json():[]),
+      fetch(SB+'/rest/v1/filters?select=*&order=created_at.asc',{headers:{apikey:KEY}}).then(r=>r.ok?r.json():[]),
+      fetch(SB+'/rest/v1/filter_options?select=*&order=created_at.asc',{headers:{apikey:KEY}}).then(r=>r.ok?r.json():[])
+    ]);
+    dbCats = c || []; dbFilters = f || []; dbOptions = o || [];
+  } catch(e) { console.warn('filter load failed', e); }
+
+  // اگه گروه خاصی انتخاب شده، فیلترهای همون گروه رو نشون بده
+  const renderFilters = () => {
+    const filterBox = $('#filters');
+    if(!filterBox) return;
+    if(cat === 'all') { filterBox.innerHTML = ''; return; }
+
+    // پیدا کردن گروه اصلی از دیتابیس (بر اساس slug یا اسم)
+    const mainCat = dbCats.find(c => c.id == cat || c.slug == cat || c.name == cat);
+    if(!mainCat) { filterBox.innerHTML = ''; return; }
+
+    // فیلترهای این گروه و زیرگروه‌هاش
+    const subIds = dbCats.filter(c => c.parent_id == mainCat.id).map(c => c.id);
+    const relevantFilters = dbFilters.filter(f => f.category_id == mainCat.id || subIds.includes(f.category_id));
+
+    if(!relevantFilters.length) { filterBox.innerHTML = ''; return; }
+
+    filterBox.innerHTML = `<div class="filter-wrap">` + relevantFilters.map(f => {
+      const opts = dbOptions.filter(o => o.filter_id == f.id);
+      const current = selectedFilters[f.id] || '';
+      return `<div class="filter-group"><b>${esc(f.name)}</b>
+        <div class="filter-opts">
+          <button class="fopt ${!current?'on':''}" data-fid="${f.id}" data-val="">همه</button>
+          ${opts.map(o=>`<button class="fopt ${current==o.id?'on':''}" data-fid="${f.id}" data-val="${o.id}">${esc(o.value)}</button>`).join('')}
+        </div></div>`;
+    }).join('') + `</div>`;
+
+    // رویداد کلیک روی گزینه‌های فیلتر
+    filterBox.querySelectorAll('.fopt').forEach(b=>{
+      b.onclick = () => {
+        const p = new URLSearchParams(location.search);
+        if(b.dataset.val) p.set('f_'+b.dataset.fid, b.dataset.val);
+        else p.delete('f_'+b.dataset.fid);
+        location.search = p.toString();
+      };
+    });
+  };
+
+  // محصولاتی که با فیلترهای انتخاب‌شده هم‌خوانی دارن
+  const applyFilters = async (list) => {
+    const activeFids = Object.keys(selectedFilters);
+    if(!activeFids.length) return list;
+
+    // گرفتن مقادیر فیلتر برای این محصولات
+    const ids = list.map(p=>`"${p.id}"`).join(',');
+    if(!ids) return list;
+    let vals = [];
+    try {
+      const r = await fetch(SB+`/rest/v1/product_filter_values?select=product_id,filter_id,option_id&product_id=in.(${ids})`,{headers:{apikey:KEY}});
+      if(r.ok) vals = await r.json();
+    } catch(e){}
+
+    return list.filter(p => {
+      // برای هر فیلتر فعال، بررسی کن که آیا این محصول مقدارش رو داره
+      return activeFids.every(fid => {
+        const want = selectedFilters[fid];
+        return vals.some(v => v.product_id == p.id && v.filter_id == fid && v.option_id == want);
+      });
+    });
+  };
+
+  // رندر چیپ‌های گروه
+  $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${c.n}</button>`).join('');
+
+  // نمایش فیلترها
+  renderFilters();
+
+  // ساخت لیست محصولات
+  const sections = [];
+  for(const c of cats){
+    if(cat != 'all' && cat != c.id) continue;
+    let l = products.filter(p => p.cat == c.id && p.name.includes(q));
+    if(!l.length) continue;
+    l = await applyFilters(l);
+    if(!l.length) continue;
+    sections.push(`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${c.n}</h2><div class="grid">`+
+      l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="افزودن به مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${priceTxt(p)}</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>');
+  }
+
+  box.innerHTML = sections.join('') || '<p>محصولی با این فیلترها پیدا نشد.</p>';
+
+  // رویدادها
+  box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
+  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
+  box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
+  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+    const p = new URLSearchParams();
+    if(b.dataset.c != 'all') p.set('cat', b.dataset.c);
+    location.search = p.toString() + '#shop';
+  });
 }
 function productPage(){
  const box=$('#prodBox');if(!box)return;
@@ -271,16 +369,16 @@ async function toWebp(file){const url=URL.createObjectURL(file);
  c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);
  const w=await new Promise(ok=>c.toBlob(ok,'image/webp',.86));
  return w&&w.type=='image/webp'?w:await new Promise(ok=>c.toBlob(ok,'image/png'))}
-async function adminProducts(){
+ async function adminProducts(){
   const box=$('#apBox');if(!box)return;
   const msg=(i,t,p,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2><p>${p||''}</p>${b||''}</div>`;
   if(!session())return msg('ti-lock','ابتدا وارد شوید','','<a class="btn" href="login.html">ورود</a>');
   await refreshSession();
   const a=await rest('admins?select=user_id').catch(()=>null);
   if(!a||!a.ok||!a.d.length)return msg('ti-lock','دسترسی ندارید','این صفحه فقط برای مدیر فروشگاه است.');
-  let dbCats = [];
-  let dbFilters = [];
-  let dbOptions = [];
+
+  let dbCats = [], dbFilters = [], dbOptions = [];
+
   const loadCats = async () => {
     const [c, f, o] = await Promise.all([
       rest('categories?select=*&order=created_at.asc').catch(()=>null),
@@ -291,18 +389,21 @@ async function adminProducts(){
     if(f && f.ok) dbFilters = f.d || [];
     if(o && o.ok) dbOptions = o.d || [];
   };
+
   let list=[];
   const cn = id => {
     const c = dbCats.find(x => x.id == id);
     if (c) return c.name;
     return (cats.find(c=>c.id==id)||{n:id}).n;
   };
+
   const load=async()=>{
     await loadCats();
     const r=await rest('products?select=*&order=created_at.desc,id.asc').catch(()=>null);
-    if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد. مرحله‌ی ساخت جدول در Supabase را انجام دهید.</p>';return}
+    if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد.</p>';return}
     list=r.d;draw()
   };
+
   const draw=()=>{
     const mainCats = dbCats.filter(c => !c.parent_id);
     box.innerHTML=`
@@ -335,6 +436,7 @@ async function adminProducts(){
         <button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button>
         <button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button>
       </div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست.</p>'}</div>`;
+
     $('#apNew').onclick=()=>form();
     const bulk=async pct=>{const sc=$('#d_scope').value,m=$('#d_msg'),q=sc=='all'?'id=not.is.null':'category_id=eq.'+sc;
       if(pct>0&&!confirm('تخفیف '+fa(pct)+'٪ روی '+(sc=='all'?'همه‌ی محصولات':'دسته‌ی '+cn(sc))+' اعمال شود؟'))return;
@@ -353,6 +455,7 @@ async function adminProducts(){
       const r=await rest('products?id=eq.'+encodeURIComponent(b.dataset.d),'DELETE',null,'return=minimal').catch(()=>null);
       toast(r&&r.ok?'حذف شد':'حذف نشد');load()})
   };
+
   const form=async p=>{
     const isNew=!p;
     const bo=isNew?null:await rest('product_bot?product_id=eq.'+encodeURIComponent(p.id)).catch(()=>null),bd=(bo&&bo.ok&&bo.d[0])||{};
@@ -409,6 +512,7 @@ async function adminProducts(){
     $('#f_add').onclick=()=>row();
     $('#f_img').onchange=e=>{const fl=e.target.files[0];if(fl)$('#f_prev').innerHTML=`<img class="prev" src="${URL.createObjectURL(fl)}" alt="">`};
     $('#f_cancel').onclick=()=>f.innerHTML='';
+    await loadCats();
     renderFilterOptions(currentCatId);
     $('#f_cat').onchange = () => renderFilterOptions($('#f_cat').value);
     $('#f_save').onclick=async()=>{
@@ -443,29 +547,3 @@ async function adminProducts(){
   };
   load()
 }
-function auth(){
- let mode='user';const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
- if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
-  if(f.get('pass').length<6)return m('رمز عبور باید حداقل ۶ کاراکتر باشد.');
-  b.disabled=true;m('در حال ساخت حساب...',1);
-  const x=await sbf('/auth/v1/signup',{email:f.get('email').trim().toLowerCase(),password:f.get('pass'),data:{name:f.get('name').trim()}}).catch(()=>null);
-  b.disabled=false;
-  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
-  if(!x.ok)return m(emsg(x.d));
-  if(x.d.access_token){save(x.d);location='index.html'}else m('حساب ساخته شد. ایمیل خود را برای تأیید بررسی کنید.',1)};
- if(l){const tabs=document.querySelectorAll('.tab'),pick=t=>{mode=t.dataset.m;tabs.forEach(x=>x.classList.toggle('on',x==t));$('#loginTitle').textContent=mode=='admin'?'ورود مدیر':'ورود به حساب';$('#regLink').style.display=mode=='admin'?'none':'';$('#err').textContent=''};
-  tabs.forEach(t=>t.onclick=()=>pick(t));if(new URLSearchParams(location.search).get('m')=='admin')pick(document.querySelector('.tab[data-m="admin"]'))}
- if(l)l.onsubmit=async e=>{e.preventDefault();const f=new FormData(l),b=l.querySelector('button');
-  b.disabled=true;m('در حال ورود...',1);
-  const x=await sbf('/auth/v1/token?grant_type=password',{email:f.get('email').trim().toLowerCase(),password:f.get('pass')}).catch(()=>null);
-  b.disabled=false;
-  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
-  if(!x.ok)return m(emsg(x.d));
-  save(x.d);const adm=await markAdmin();
-  if(mode=='admin'&&!adm){localStorage.removeItem('sb');return m('این حساب مدیر نیست. با حساب مدیر وارد شوید.')}
-  location=mode=='admin'?'admin.html':'index.html'};
-}
-footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();refreshSession().then(header);
-loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
-const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
-document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
