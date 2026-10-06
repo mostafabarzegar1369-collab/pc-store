@@ -113,6 +113,10 @@ let q=(P.get('q')||'').trim();
 
 async function shop(){
  const box=$('#shop');if(!box)return;
+ // DEBUG - موقت
+let dbg=document.getElementById('dbgBox');
+if(!dbg){dbg=document.createElement('div');dbg.id='dbgBox';dbg.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;z-index:99999;font-size:12px;padding:8px;font-family:monospace;direction:ltr';document.body.appendChild(dbg)}
+dbg.innerHTML='products: '+products.length+' | cats: '+cats.length+' | cat: '+cat+' | sample product: '+(products[0]?JSON.stringify({id:products[0].id,cat:products[0].cat,category_id:products[0].category_id}):'NONE');
   const urlCat=new URLSearchParams(location.search).get('cat');
 if(urlCat && cats.some(c=>c.id==urlCat)){
   cat=urlCat;
