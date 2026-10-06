@@ -271,16 +271,16 @@ async function toWebp(file){const url=URL.createObjectURL(file);
  c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);
  const w=await new Promise(ok=>c.toBlob(ok,'image/webp',.86));
  return w&&w.type=='image/webp'?w:await new Promise(ok=>c.toBlob(ok,'image/png'))}
-async function adminProducts(){
+ async function adminProducts(){
   const box=$('#apBox');if(!box)return;
   const msg=(i,t,p,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2><p>${p||''}</p>${b||''}</div>`;
   if(!session())return msg('ti-lock','ابتدا وارد شوید','','<a class="btn" href="login.html">ورود</a>');
   await refreshSession();
   const a=await rest('admins?select=user_id').catch(()=>null);
   if(!a||!a.ok||!a.d.length)return msg('ti-lock','دسترسی ندارید','این صفحه فقط برای مدیر فروشگاه است.');
-  let dbCats = [];
-  let dbFilters = [];
-  let dbOptions = [];
+
+  let dbCats = [], dbFilters = [], dbOptions = [];
+
   const loadCats = async () => {
     const [c, f, o] = await Promise.all([
       rest('categories?select=*&order=created_at.asc').catch(()=>null),
@@ -291,18 +291,21 @@ async function adminProducts(){
     if(f && f.ok) dbFilters = f.d || [];
     if(o && o.ok) dbOptions = o.d || [];
   };
+
   let list=[];
   const cn = id => {
     const c = dbCats.find(x => x.id == id);
     if (c) return c.name;
     return (cats.find(c=>c.id==id)||{n:id}).n;
   };
+
   const load=async()=>{
     await loadCats();
     const r=await rest('products?select=*&order=created_at.desc,id.asc').catch(()=>null);
-    if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد. مرحله‌ی ساخت جدول در Supabase را انجام دهید.</p>';return}
+    if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد.</p>';return}
     list=r.d;draw()
   };
+
   const draw=()=>{
     const mainCats = dbCats.filter(c => !c.parent_id);
     box.innerHTML=`
@@ -335,6 +338,7 @@ async function adminProducts(){
         <button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button>
         <button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button>
       </div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست.</p>'}</div>`;
+
     $('#apNew').onclick=()=>form();
     const bulk=async pct=>{const sc=$('#d_scope').value,m=$('#d_msg'),q=sc=='all'?'id=not.is.null':'category_id=eq.'+sc;
       if(pct>0&&!confirm('تخفیف '+fa(pct)+'٪ روی '+(sc=='all'?'همه‌ی محصولات':'دسته‌ی '+cn(sc))+' اعمال شود؟'))return;
@@ -353,6 +357,7 @@ async function adminProducts(){
       const r=await rest('products?id=eq.'+encodeURIComponent(b.dataset.d),'DELETE',null,'return=minimal').catch(()=>null);
       toast(r&&r.ok?'حذف شد':'حذف نشد');load()})
   };
+
   const form=async p=>{
     const isNew=!p;
     const bo=isNew?null:await rest('product_bot?product_id=eq.'+encodeURIComponent(p.id)).catch(()=>null),bd=(bo&&bo.ok&&bo.d[0])||{};
@@ -443,29 +448,3 @@ async function adminProducts(){
   };
   load()
 }
-function auth(){
- let mode='user';const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
- if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
-  if(f.get('pass').length<6)return m('رمز عبور باید حداقل ۶ کاراکتر باشد.');
-  b.disabled=true;m('در حال ساخت حساب...',1);
-  const x=await sbf('/auth/v1/signup',{email:f.get('email').trim().toLowerCase(),password:f.get('pass'),data:{name:f.get('name').trim()}}).catch(()=>null);
-  b.disabled=false;
-  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
-  if(!x.ok)return m(emsg(x.d));
-  if(x.d.access_token){save(x.d);location='index.html'}else m('حساب ساخته شد. ایمیل خود را برای تأیید بررسی کنید.',1)};
- if(l){const tabs=document.querySelectorAll('.tab'),pick=t=>{mode=t.dataset.m;tabs.forEach(x=>x.classList.toggle('on',x==t));$('#loginTitle').textContent=mode=='admin'?'ورود مدیر':'ورود به حساب';$('#regLink').style.display=mode=='admin'?'none':'';$('#err').textContent=''};
-  tabs.forEach(t=>t.onclick=()=>pick(t));if(new URLSearchParams(location.search).get('m')=='admin')pick(document.querySelector('.tab[data-m="admin"]'))}
- if(l)l.onsubmit=async e=>{e.preventDefault();const f=new FormData(l),b=l.querySelector('button');
-  b.disabled=true;m('در حال ورود...',1);
-  const x=await sbf('/auth/v1/token?grant_type=password',{email:f.get('email').trim().toLowerCase(),password:f.get('pass')}).catch(()=>null);
-  b.disabled=false;
-  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
-  if(!x.ok)return m(emsg(x.d));
-  save(x.d);const adm=await markAdmin();
-  if(mode=='admin'&&!adm){localStorage.removeItem('sb');return m('این حساب مدیر نیست. با حساب مدیر وارد شوید.')}
-  location=mode=='admin'?'admin.html':'index.html'};
-}
-footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();refreshSession().then(header);
-loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
-const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
-document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
