@@ -8,16 +8,8 @@
    "p": "از کارت گرافیک تا قاب کیس، از لپ‌تاپ تا کنسول بازی؛ همه‌چیز در یک فروشگاه.",
    "b": "مشاهده محصولات",
    "u": "#shop",
-   "i": [
-    "mouse",
-    "chip",
-    "keyboard"
-   ],
-   "tg": [
-    "۲۶۰۰۰ DPI",
-    "RTX 4070"
-   ],
-   "g": "linear-gradient(135deg,#2d1b7a,#4a2bb8 55%,#6d3fe0)"
+   "g": "linear-gradient(135deg,#2d1b7a,#4a2bb8 55%,#6d3fe0)",
+   "img": "images/slide1.png"
   },
   {
    "t": "دنیای PlayStation",
@@ -26,16 +18,8 @@
    "p": "کنسول، دسته و لوازم جانبی برای تجربه‌ی بازی راحت.",
    "b": "مشاهده کنسول‌ها",
    "u": "index.html?cat=ps#shop",
-   "i": [
-    "headphones",
-    "brand-playstation",
-    "device-gamepad-2"
-   ],
-   "tg": [
-    "PlayStation 5",
-    "DualSense"
-   ],
-   "g": "linear-gradient(135deg,#1c1056,#3a2aa8 55%,#5b3fd1)"
+   "g": "linear-gradient(135deg,#1c1056,#3a2aa8 55%,#5b3fd1)",
+   "img": "images/slide2.png"
   },
   {
    "t": "لپ‌تاپ",
@@ -44,16 +28,8 @@
    "p": "از لپ‌تاپ اداری تا مدل‌های گیمینگ با کارت گرافیک جدا.",
    "b": "مشاهده لپ‌تاپ‌ها",
    "u": "index.html?cat=laptop#shop",
-   "i": [
-    "keyboard",
-    "device-laptop",
-    "mouse"
-   ],
-   "tg": [
-    "RTX 4060",
-    "۱۶ گیگابایت"
-   ],
-   "g": "linear-gradient(135deg,#251a6e,#4328a6 55%,#7a4be8)"
+   "g": "linear-gradient(135deg,#251a6e,#4328a6 55%,#7a4be8)",
+   "img": "images/slide3.png"
   },
   {
    "t": "راهنمای بازی‌ها",
@@ -62,16 +38,8 @@
    "p": "بازی‌های محبوب را بشناسید و سخت‌افزار مناسب هر کدام را ببینید.",
    "b": "معرفی بازی‌ها",
    "u": "games.html",
-   "i": [
-    "device-gamepad-2",
-    "chip",
-    "device-desktop"
-   ],
-   "tg": [
-    "PC",
-    "PlayStation"
-   ],
-   "g": "linear-gradient(135deg,#2a1a78,#5530b8 55%,#8250f0)"
+   "g": "linear-gradient(135deg,#2a1a78,#5530b8 55%,#8250f0)",
+   "img": "images/slide4.png"
   }
  ]
 }
