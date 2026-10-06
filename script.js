@@ -448,3 +448,29 @@ async function toWebp(file){const url=URL.createObjectURL(file);
   };
   load()
 }
+function auth(){
+ let mode='user';const r=$('#regForm'),l=$('#logForm'),m=(t,ok)=>{const e=$('#err');e.textContent=t;e.style.color=ok?'#7be0a4':''};
+ if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
+  if(f.get('pass').length<6)return m('رمز عبور باید حداقل ۶ کاراکتر باشد.');
+  b.disabled=true;m('در حال ساخت حساب...',1);
+  const x=await sbf('/auth/v1/signup',{email:f.get('email').trim().toLowerCase(),password:f.get('pass'),data:{name:f.get('name').trim()}}).catch(()=>null);
+  b.disabled=false;
+  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
+  if(!x.ok)return m(emsg(x.d));
+  if(x.d.access_token){save(x.d);location='index.html'}else m('حساب ساخته شد. ایمیل خود را برای تأیید بررسی کنید.',1)};
+ if(l){const tabs=document.querySelectorAll('.tab'),pick=t=>{mode=t.dataset.m;tabs.forEach(x=>x.classList.toggle('on',x==t));$('#loginTitle').textContent=mode=='admin'?'ورود مدیر':'ورود به حساب';$('#regLink').style.display=mode=='admin'?'none':'';$('#err').textContent=''};
+  tabs.forEach(t=>t.onclick=()=>pick(t));if(new URLSearchParams(location.search).get('m')=='admin')pick(document.querySelector('.tab[data-m="admin"]'))}
+ if(l)l.onsubmit=async e=>{e.preventDefault();const f=new FormData(l),b=l.querySelector('button');
+  b.disabled=true;m('در حال ورود...',1);
+  const x=await sbf('/auth/v1/token?grant_type=password',{email:f.get('email').trim().toLowerCase(),password:f.get('pass')}).catch(()=>null);
+  b.disabled=false;
+  if(!x)return m('اتصال برقرار نشد. اینترنت خود را بررسی کنید.');
+  if(!x.ok)return m(emsg(x.d));
+  save(x.d);const adm=await markAdmin();
+  if(mode=='admin'&&!adm){localStorage.removeItem('sb');return m('این حساب مدیر نیست. با حساب مدیر وارد شوید.')}
+  location=mode=='admin'?'admin.html':'index.html'};
+}
+footer();header();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();refreshSession().then(header);
+loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد. صفحه را رفرش کنید.</p>'})});
+const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
+document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
