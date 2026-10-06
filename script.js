@@ -361,9 +361,10 @@ async function adminProducts(){
     const mainCats = dbCats.filter(c => !c.parent_id);
     const currentCatId = p.category_id || p.cat;
     const getFiltersForCat = (cid) => {
-      const subs2 = dbCats.filter(c => c.parent_id == cid).map(c => c.id);
-      return dbFilters.filter(f2 => f2.category_id == cid || subs2.includes(f2.category_id));
-    };
+  const cidNum = Number(cid);
+  const subs2 = dbCats.filter(c => Number(c.parent_id) === cidNum).map(c => Number(c.id));
+  return dbFilters.filter(f2 => Number(f2.category_id) === cidNum || subs2.includes(Number(f2.category_id)));
+};
     const renderFilterOptions = (catId) => {
       const fl = getFiltersForCat(catId);
       const wrap = $('#f_filters');
