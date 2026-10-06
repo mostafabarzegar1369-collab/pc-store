@@ -386,4 +386,4 @@ img,svg,video{max-width:100%}
 
 .slider .stage{min-height:320px;display:flex;align-items:center;justify-content:center}
 .slider .hero{min-height:380px;padding:24px 0}
-.simg{width:100%;max-width:520px;max-height:340px;object-fit:contain;filter:drop-shadow(0 20px 40px rgba(0,0,0,0.4))}mg{width:auto;max-height:360px;min-width:280px;object-fit:contain}
+.simg{width:100%;max-width:800px;max-height:640px;object-fit:contain;filter:drop-shadow(0 20px 40px rgba(0,0,0,0.4))}mg{width:auto;max-height:360px;min-width:280px;object-fit:contain}
