@@ -386,4 +386,4 @@ img,svg,video{max-width:100%}
 
 .slider .stage{min-height:380px}
 .slider .hero{min-height:420px}
-.simg{width:auto;max-height:360px}
+..simg{width:auto;max-height:360px;min-width:280px;object-fit:contain}
