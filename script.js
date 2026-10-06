@@ -112,23 +112,19 @@ let cat=sessionStorage.getItem('lastCat') || 'all';
 let q=(P.get('q')||'').trim();
 
 async function shop(){
- const box=$('#shop');if(!box)return;
- // DEBUG - موقت
-let dbg=document.getElementById('dbgBox');
-if(!dbg){dbg=document.createElement('div');dbg.id='dbgBox';dbg.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;z-index:99999;font-size:12px;padding:8px;font-family:monospace;direction:ltr';document.body.appendChild(dbg)}
-const vc=cats.filter(c=>cat=='all'||cat==c.id);
-const p0=products[0];
-dbg.innerHTML='P:'+products.length+' C:'+cats.length+' cat:'+cat+' catIds:'+cats.map(c=>c.dbId+':'+c.n).join(' | ')+' p0.cid:'+(products[0]?String(products[0].category_id):'-');
+  const box=$('#shop');if(!box)return;
+
+  // خوندن گروه از URL
   const urlCat=new URLSearchParams(location.search).get('cat');
-if(urlCat && cats.some(c=>c.id==urlCat)){
-  cat=urlCat;
-  sessionStorage.setItem('lastCat',cat);
-} else if(cats.some(c=>c.id==cat)){
-  // cat قبلی حفظ میشه
-} else {
-  cat='all';
-  sessionStorage.removeItem('lastCat');
-}
+  if(urlCat && cats.some(c=>c.id==urlCat)){
+    cat=urlCat;
+    sessionStorage.setItem('lastCat',cat);
+  } else if(cats.some(c=>c.id==cat)){
+    // cat قبلی حفظ میشه
+  } else {
+    cat='all';
+    sessionStorage.removeItem('lastCat');
+  }
   if(cat!='all' && !cats.some(c=>c.id==cat)) cat='all';
 
   // فیلترهای فعال از URL
@@ -146,7 +142,6 @@ if(urlCat && cats.some(c=>c.id==urlCat)){
     const activeCat=cats.find(c=>c.id==cat);
     if(activeCat && activeCat.dbId){
       try{
-  
         const fr=await fetch(SB+'/rest/v1/filters?select=*&category_id=eq.'+activeCat.dbId+'&order=created_at.asc',{headers:{apikey:KEY}});
         const or=await fetch(SB+'/rest/v1/filter_options?select=*&order=created_at.asc',{headers:{apikey:KEY}});
         if(fr.ok && or.ok){
@@ -154,7 +149,6 @@ if(urlCat && cats.some(c=>c.id==urlCat)){
           if(fList.length){
             filtersBox.innerHTML=fList.map(f=>{
               const opts=oList.filter(o=>String(o.filter_id)===String(f.id));
-              const cur=params.get('f'+activeCat.dbId)==String(f.id)?'':(params.get('f'+activeCat.dbId)||'');
               const curVal=params.get('fo'+f.id)||'';
               return `<div class="filter-group"><b>${esc(f.name)}</b><div class="filter-opts"><button class="fopt ${!curVal?'on':''}" data-fid="${f.id}" data-val="">همه</button>${opts.map(o=>`<button class="fopt ${curVal==o.id?'on':''}" data-fid="${f.id}" data-val="${o.id}">${esc(o.value)}</button>`).join('')}</div></div>`;
             }).join('');
@@ -171,47 +165,47 @@ if(urlCat && cats.some(c=>c.id==urlCat)){
   }
 
   // ==== اعمال فیلترهای انتخاب‌شده ====
-const selectedOpts=[];
-new URLSearchParams(location.search).forEach((v,k)=>{
-  if(k.startsWith('fo')) selectedOpts.push(v);
-});
+  const selectedOpts=[];
+  new URLSearchParams(location.search).forEach((v,k)=>{
+    if(k.startsWith('fo')) selectedOpts.push(v);
+  });
 
-let filteredProductIds=null;
-if(selectedOpts.length){
-  try{
-    const fvr=await fetch(SB+'/rest/v1/product_filter_values?select=product_id&option_id=in.('+selectedOpts.join(',')+')',{headers:{apikey:KEY}});
-    if(fvr.ok){
-      const fv=await fvr.json();
-      filteredProductIds=new Set(fv.map(x=>String(x.product_id)));
-    }
-  }catch(e){console.warn('filter products failed',e)}
-}
+  let filteredProductIds=null;
+  if(selectedOpts.length){
+    try{
+      const fvr=await fetch(SB+'/rest/v1/product_filter_values?select=product_id&option_id=in.('+selectedOpts.join(',')+')',{headers:{apikey:KEY}});
+      if(fvr.ok){
+        const fv=await fvr.json();
+        filteredProductIds=new Set(fv.map(x=>String(x.product_id)));
+      }
+    }catch(e){console.warn('filter products failed',e)}
+  }
+
   // محصولات
   const visibleCats=cats.filter(c=>cat=='all'||cat==c.id);
   if(!visibleCats.length){box.innerHTML='<p>محصولی پیدا نشد.</p>';return}
 
   box.innerHTML=visibleCats.map(c=>{
-  
     let l=products.filter(p=>{
-  const pCat = p.category_id ? String(p.category_id) : String(p.cat);
-  return pCat == String(c.dbId) && (q?p.name.includes(q):true);
-});
-  if(filteredProductIds && filteredProductIds.size>0){
-    l=l.filter(p=>filteredProductIds.has(String(p.id)));
-  }
-  if(!l.length)return'';
-  return`<h2 class="g" id="${c.id}"...`;
-}).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
-const dbgBox=document.getElementById('dbgBox');
-if(dbgBox) dbgBox.innerHTML+=' | boxHTML:'+box.innerHTML.length+' cards:'+box.querySelectorAll('.card').length;
+      const pCat = p.category_id ? String(p.category_id) : String(p.cat);
+      return pCat == String(c.dbId) && (q?p.name.includes(q):true);
+    });
+    if(filteredProductIds && filteredProductIds.size>0){
+      l=l.filter(p=>filteredProductIds.has(String(p.id)));
+    }
+    if(!l.length)return'';
+    return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${priceTxt(p)}</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>';
+  }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
 
+  box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
+  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
   box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
   $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
-  const p=new URLSearchParams();
-  if(b.dataset.c!='all'){p.set('cat',b.dataset.c);sessionStorage.setItem('lastCat',b.dataset.c)}
-  else{sessionStorage.removeItem('lastCat')}
-  location.search=p.toString();
-});
+    const p=new URLSearchParams();
+    if(b.dataset.c!='all'){p.set('cat',b.dataset.c);sessionStorage.setItem('lastCat',b.dataset.c)}
+    else{sessionStorage.removeItem('lastCat')}
+    location.search=p.toString();
+  });
 }
   
 // ==================== PRODUCT PAGE ====================
