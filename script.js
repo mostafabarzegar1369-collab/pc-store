@@ -191,7 +191,8 @@ if(selectedOpts.length){
   if(!visibleCats.length){box.innerHTML='<p>محصولی پیدا نشد.</p>';return}
 
   box.innerHTML=visibleCats.map(c=>{
-  let l=products.filter(p=>{
+  
+    let l=products.filter(p=>{
   const pCat = p.category_id ? String(p.category_id) : String(p.cat);
   return pCat == String(c.dbId) && (q?p.name.includes(q):true);
 });
@@ -201,7 +202,9 @@ if(selectedOpts.length){
   if(!l.length)return'';
   return`<h2 class="g" id="${c.id}"...`;
 }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
-  
+const dbgBox=document.getElementById('dbgBox');
+if(dbgBox) dbgBox.innerHTML+=' | boxHTML:'+box.innerHTML.length+' cards:'+box.querySelectorAll('.card').length;
+
   box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
   $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
   const p=new URLSearchParams();
