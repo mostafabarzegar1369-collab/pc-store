@@ -491,7 +491,7 @@ async function adminProducts(){
         image=SB+'/storage/v1/object/public/product-images/'+path}catch(e){return m.textContent='عکس خوانده نشد.'}}
       const specs=[...f.querySelectorAll('.srow')].map(d=>[d.querySelector('.sl').value.trim(),d.querySelector('.sv').value.trim()]).filter(x=>x[0]&&x[1]);
       const catObj=dbCats.find(c=>String(c.id)===String(chosenCat));
-      const catSlug=catObj?(catObj.slug||String(catObj.id)):chosenCat;
+      const catSlug=catObj?((catObj.slug && /^[a-z0-9-]+$/i.test(catObj.slug)) ? catObj.slug : String(catObj.id)):chosenCat;
       const row={id:p.id,cat:catSlug,category_id:catObj?Number(catObj.id):null,name,price,discount:Math.min(90,Math.max(0,parseInt(($('#f_disc').value||'').replace(/[^0-9]/g,''),10)||0)),description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
       const r=await rest('products?on_conflict=id','POST',row,'resolution=merge-duplicates,return=minimal').catch(()=>null);
       if(!r||!r.ok)return m.textContent='ذخیره نشد.';
