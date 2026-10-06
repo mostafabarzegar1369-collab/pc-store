@@ -108,11 +108,13 @@ function tilt(el,deg,lift){if(matchMedia('(hover:none)').matches)return;
 
 // ==================== SHOP ====================
 const P=new URLSearchParams(location.search);
-let cat=cats.some(c=>c.id==P.get('cat'))?P.get('cat'):'all';
+let cat='all';
 let q=(P.get('q')||'').trim();
 
 async function shop(){
-  const box=$('#shop');if(!box)return;
+ const box=$('#shop');if(!box)return;
+  const urlCat=new URLSearchParams(location.search).get('cat');
+cat = (urlCat && cats.some(c=>c.id==urlCat)) ? urlCat : 'all';
   if(cat!='all' && !cats.some(c=>c.id==cat)) cat='all';
 
   // فیلترهای فعال از URL
