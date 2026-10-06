@@ -12,13 +12,37 @@ const emsg=d=>errs[d.error_code||d.code]||'مشکلی پیش آمد. دوبار�
 async function markAdmin(){const r=await rest('admins?select=user_id').catch(()=>null),adm=!!(r&&r.ok&&Array.isArray(r.d)&&r.d.length),s=session();if(s){s.adm=adm;localStorage.setItem('sb',JSON.stringify(s))}return adm}
 async function refreshSession(){const s=session();if(!s||s.exp>Date.now()+60000)return;const r=await sbf('/auth/v1/token?grant_type=refresh_token',{refresh_token:s.rt}).catch(()=>null);if(r&&r.ok)save(r.d);else if(r)localStorage.removeItem('sb')}
 const fa=n=>n.toLocaleString('fa-IR');
-const cats=[
+const catsDefault=[
  {id:'cpu',n:'پردازنده',i:'ti-cpu'},{id:'gpu',n:'کارت گرافیک',i:'ti-chip'},{id:'mb',n:'مادربرد',i:'ti-cpu-2'},
  {id:'ram',n:'رم',i:'ti-database'},{id:'ssd',n:'حافظه ذخیره‌سازی',i:'ti-server'},{id:'psu',n:'پاور',i:'ti-bolt'},
  {id:'case',n:'قاب کیس',i:'ti-box'},{id:'cool',n:'خنک‌کننده',i:'ti-snowflake'},{id:'mon',n:'مانیتور',i:'ti-device-desktop'},
  {id:'laptop',n:'لپ‌تاپ',i:'ti-device-laptop'},{id:'ps',n:'کنسول بازی',i:'ti-brand-playstation'},
  {id:'mouse',n:'موس',i:'ti-mouse'},{id:'kb',n:'کیبورد',i:'ti-keyboard'},{id:'head',n:'هدست',i:'ti-headphones'}];
-const cols=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#a78bfa','#8ea2ff','#b9a4ff'];cats.forEach((c,i)=>c.col=cols[i]);
+let cats = catsDefault;
+
+async function loadCatsFromDB() {
+  try {
+    const r = await fetch(SB+'/rest/v1/categories?select=*&order=created_at.asc', {headers:{apikey:KEY}});
+    if (!r.ok) return;
+    const dbCats = await r.json();
+    if (!Array.isArray(dbCats) || !dbCats.length) return;
+    const catColors = ['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#a78bfa','#8ea2ff','#b9a4ff'];
+    const catIcons = {mon:'ti-device-desktop', hard:'ti-server', cpu:'ti-cpu', gpu:'ti-chip', mb:'ti-cpu-2', ram:'ti-database', ssd:'ti-server', psu:'ti-bolt', case:'ti-box', cool:'ti-snowflake', laptop:'ti-device-laptop', ps:'ti-brand-playstation', mouse:'ti-mouse', kb:'ti-keyboard', head:'ti-headphones'};
+    cats = dbCats.map((c, i) => ({
+      id: c.slug || c.name || String(c.id),
+      n: c.name,
+      i: catIcons[c.slug] || catIcons[c.name] || 'ti-box',
+      col: catColors[i % catColors.length]
+    }));
+  } catch(e) { console.warn('load cats failed', e); }
+}
+
+loadCatsFromDB().then(() => {
+  if (typeof header === 'function') header();
+  if (typeof footer === 'function') footer();
+  if (typeof tiles === 'function') tiles();
+  if (typeof shop === 'function' && $('#shop')) shop();
+});
 const subs={cpu:['Ryzen','Core'],gpu:['RTX','RX'],mb:['AM5','LGA1700'],ram:['DDR5','DDR4'],ssd:['NVMe','HDD'],psu:['۷۵۰','ماژولار'],case:['میدتاور','مینی‌تاور'],cool:['هوایی','واترکولر'],mon:['۲۴','4K'],laptop:['گیمینگ','اداری'],ps:['کنسول','دسته'],mouse:['بی‌سیم','سبک'],kb:['مکانیکال','۶۰ درصد'],head:['گیمینگ','استودیویی']};
 const CAT_IMAGES=[];
 let _cfg;const siteCfg=()=>_cfg||(_cfg=fetch('site.json').then(r=>r.ok?r.json():{}).catch(()=>({})));
