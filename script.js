@@ -118,7 +118,7 @@ let dbg=document.getElementById('dbgBox');
 if(!dbg){dbg=document.createElement('div');dbg.id='dbgBox';dbg.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;z-index:99999;font-size:12px;padding:8px;font-family:monospace;direction:ltr';document.body.appendChild(dbg)}
 const vc=cats.filter(c=>cat=='all'||cat==c.id);
 const p0=products[0];
-dbg.innerHTML='P:'+products.length+' C:'+cats.length+' cat:'+cat+' vc:'+cats.filter(c=>cat=='all'||cat==c.id).length+' p0.cid:'+(products[0]?String(products[0].category_id):'-')+' c5.id:'+(cats.find(c=>c.name=='رم')?String(cats.find(c=>c.name=='رم').id):'-')+' c5.dbId:'+(cats.find(c=>c.name=='رم')?String(cats.find(c=>c.name=='رم').dbId):'-')+' p0.name:'+(products[0]?products[0].name:'-');
+dbg.innerHTML='P:'+products.length+' C:'+cats.length+' cat:'+cat+' catIds:'+cats.map(c=>c.dbId+':'+c.n).join(' | ')+' p0.cid:'+(products[0]?String(products[0].category_id):'-');
   const urlCat=new URLSearchParams(location.search).get('cat');
 if(urlCat && cats.some(c=>c.id==urlCat)){
   cat=urlCat;
