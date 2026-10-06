@@ -518,15 +518,28 @@ async function adminProducts(){
     const bo=isNew?null:await rest('product_bot?product_id=eq.'+encodeURIComponent(p.id)).catch(()=>null),bd=(bo&&bo.ok&&bo.d[0])||{};
     p=p||{id:'p'+Date.now().toString(36),name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
     const f=$('#apForm');
+    let existingFVals=[];
+if(!isNew && p.id){
+  try{
+    const evr=await rest('product_filter_values?product_id=eq.'+encodeURIComponent(p.id));
+    if(evr&&evr.ok)existingFVals=evr.d||[];
+  }catch(e){existingFVals=[]}
+}
+    
     const mainCats=dbCats.filter(c=>!c.parent_id);
     const currentCatId=p.category_id||null;
     const getFiltersForCat=(cid)=>{const subs2=dbCats.filter(c=>String(c.parent_id)===String(cid)).map(c=>c.id);return dbFilters.filter(f2=>String(f2.category_id)===String(cid)||subs2.map(String).includes(String(f2.category_id)))};
     const renderFilterOptions=(catId)=>{
-      const fl=getFiltersForCat(catId),wrap=$('#f_filters');
-      if(!wrap)return;
-      if(!fl.length){wrap.innerHTML='<p class="mu">برای این گروه فیلتری تعریف نشده.</p>';return}
-      wrap.innerHTML=fl.map(f2=>{const opts=dbOptions.filter(o=>String(o.filter_id)===String(f2.id));return`<div style="margin:8px 0"><label>${esc(f2.name)}</label><select class="filter-select" data-fid="${f2.id}"><option value="">— انتخاب کنید —</option>${opts.map(o=>`<option value="${o.id}">${esc(o.value)}</option>`).join('')}</select></div>`}).join('');
-    };
+  const fl=getFiltersForCat(catId),wrap=$('#f_filters');
+  if(!wrap)return;
+  if(!fl.length){wrap.innerHTML='<p class="mu">برای این گروه فیلتری تعریف نشده.</p>';return}
+  wrap.innerHTML=fl.map(f2=>{
+    const opts=dbOptions.filter(o=>String(o.filter_id)===String(f2.id));
+    const existing=existingFVals.find(ev=>String(ev.filter_id)===String(f2.id));
+    const selVal=existing?String(existing.option_id):'';
+    return `<div style="margin:8px 0"><label>${esc(f2.name)}</label><select class="filter-select" data-fid="${f2.id}"><option value="">— انتخاب کنید —</option>${opts.map(o=>`<option value="${o.id}" ${selVal===String(o.id)?'selected':''}>${esc(o.value)}</option>`).join('')}</select></div>`;
+  }).join('');
+};
     f.innerHTML=`<div class="apf"><h3>${isNew?'محصول جدید':'ویرایش محصول'}</h3>
     <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
     <label>گروه<select id="f_cat"><option value="">— انتخاب کنید —</option>${mainCats.map(c=>`<option value="${c.id}" ${String(c.id)===String(currentCatId)?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
@@ -571,6 +584,7 @@ async function adminProducts(){
       const links=($('#f_links').value||'').split(/\s+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x)),fp=parseInt(($('#f_floor').value||'').replace(/[^0-9]/g,''),10)||null;
       if(links.length||fp||bd.product_id){await rest('product_bot?on_conflict=product_id','POST',{product_id:p.id,links,min_price:fp},'resolution=merge-duplicates,return=minimal').catch(()=>null)}
       toast('ذخیره شد');load();
+    existingFVals=fvals.slice();
     };
     f.scrollIntoView({behavior:'smooth',block:'start'});
   };
