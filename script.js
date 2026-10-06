@@ -301,9 +301,14 @@ const normP=d=>{
 };
 
 async function loadProducts(){
-  try{const r=await fetch(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}});
-    if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length)return d.map(normP).filter(Boolean)}}catch(e){}
-  return (await fetch('products.json').catch(()=>({json:()=>[]}))).json()
+  try{
+    const r=await fetch(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}});
+    if(r.ok){
+      const d=await r.json();
+      if(Array.isArray(d)&&d.length) return d.map(normP).filter(Boolean);
+    }
+  }catch(e){}
+  return (await fetch('products.json')).json();
 }
 
 // ==================== BEST RAIL ====================
