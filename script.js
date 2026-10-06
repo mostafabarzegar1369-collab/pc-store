@@ -111,24 +111,78 @@ const P=new URLSearchParams(location.search);
 let cat=cats.some(c=>c.id==P.get('cat'))?P.get('cat'):'all';
 let q=(P.get('q')||'').trim();
 
-function shop(){
+async function shop(){
   const box=$('#shop');if(!box)return;
-  // اگه cat توی cats نبود، همه نشون بده
   if(cat!='all' && !cats.some(c=>c.id==cat)) cat='all';
+
+  // فیلترهای فعال از URL
+  const params=new URLSearchParams(location.search);
+  const activeFilters={};
+  cats.forEach(c=>{ if(c.dbId) activeFilters[String(c.dbId)]=params.get('f'+c.dbId)||''; });
+
+  // چیپ‌های گروه
   $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${esc(c.n)}</button>`).join('');
+
+  // بارگذاری فیلترها برای گروه فعال
+  const filtersBox=$('#filters');
+  if(filtersBox) filtersBox.innerHTML='';
+  if(cat!='all' && filtersBox){
+    const activeCat=cats.find(c=>c.id==cat);
+    if(activeCat && activeCat.dbId){
+      try{
+        const fr=await fetch(SB+'/rest/v1/filters?select=*&category_id=eq.'+activeCat.dbId+'&order=created_at.asc',{headers:{apikey:KEY}});
+        const or=await fetch(SB+'/rest/v1/filter_options?select=*&order=created_at.asc',{headers:{apikey:KEY}});
+        if(fr.ok && or.ok){
+          const fList=await fr.json(),oList=await or.json();
+          if(fList.length){
+            filtersBox.innerHTML=fList.map(f=>{
+              const opts=oList.filter(o=>String(o.filter_id)===String(f.id));
+              const cur=params.get('f'+activeCat.dbId)==String(f.id)?'':(params.get('f'+activeCat.dbId)||'');
+              const curVal=params.get('fo'+f.id)||'';
+              return `<div class="filter-group"><b>${esc(f.name)}</b><div class="filter-opts"><button class="fopt ${!curVal?'on':''}" data-fid="${f.id}" data-val="">همه</button>${opts.map(o=>`<button class="fopt ${curVal==o.id?'on':''}" data-fid="${f.id}" data-val="${o.id}">${esc(o.value)}</button>`).join('')}</div></div>`;
+            }).join('');
+            filtersBox.querySelectorAll('.fopt').forEach(b=>b.onclick=()=>{
+              const p=new URLSearchParams(location.search);
+              if(b.dataset.val) p.set('fo'+b.dataset.fid,b.dataset.val);
+              else p.delete('fo'+b.dataset.fid);
+              location.search=p.toString();location.reload();
+            });
+          }
+        }
+      }catch(e){console.warn('filter load failed',e)}
+    }
+  }
+
+  // محصولات
   const visibleCats=cats.filter(c=>cat=='all'||cat==c.id);
-  if(!visibleCats.length){box.innerHTML='<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';return}
+  if(!visibleCats.length){box.innerHTML='<p>محصولی پیدا نشد.</p>';return}
+
+  // گرفتن مقادیر فیلتر برای محصولات (اگه فیلتری فعاله)
+  let filterVals=[];
+  const selectedOpts=Object.keys(params).filter(k=>k.startsWith('fo')).map(k=>params.get(k));
+  if(selectedOpts.length){
+    try{
+      const r=await fetch(SB+'/rest/v1/product_filter_values?select=product_id,option_id&option_id=in.('+selectedOpts.join(',')+')',{headers:{apikey:KEY}});
+      if(r.ok) filterVals=await r.json();
+    }catch(e){}
+  }
+
   box.innerHTML=visibleCats.map(c=>{
-    const l=products.filter(p=>p.cat==c.id && (q?p.name.includes(q):true));
+    let l=products.filter(p=>p.cat==c.id && (q?p.name.includes(q):true));
+    // اگه فیلتر فعاله، فقط محصولاتی که همه‌ی گزینه‌های انتخابی رو دارن
+    if(selectedOpts.length){
+      const prodsWithFilter=filterVals.map(v=>String(v.product_id));
+      l=l.filter(p=>prodsWithFilter.includes(String(p.id)));
+    }
     if(!l.length)return'';
     return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${priceTxt(p)}</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>';
-  }).join('')||'<p>محصولی پیدا نشد. عبارت دیگری جستجو کنید.</p>';
+  }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
   box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
   box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
   box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
-  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{cat=b.dataset.c;const p=new URLSearchParams(location.search);if(cat=='all')p.delete('cat');else p.set('cat',cat);p.set('_t',Date.now());location.search=p.toString()+'#shop';location.reload()});
+  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const p=new URLSearchParams();if(b.dataset.c!='all')p.set('cat',b.dataset.c);location.search=p.toString();location.reload()});
 }
-
+  
 // ==================== PRODUCT PAGE ====================
 function productPage(){
   const box=$('#prodBox');if(!box)return;
