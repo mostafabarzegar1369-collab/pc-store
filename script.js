@@ -108,13 +108,21 @@ function tilt(el,deg,lift){if(matchMedia('(hover:none)').matches)return;
 
 // ==================== SHOP ====================
 const P=new URLSearchParams(location.search);
-let cat='all';
+let cat=sessionStorage.getItem('lastCat') || 'all';
 let q=(P.get('q')||'').trim();
 
 async function shop(){
  const box=$('#shop');if(!box)return;
   const urlCat=new URLSearchParams(location.search).get('cat');
-cat = (urlCat && cats.some(c=>c.id==urlCat)) ? urlCat : 'all';
+if(urlCat && cats.some(c=>c.id==urlCat)){
+  cat=urlCat;
+  sessionStorage.setItem('lastCat',cat);
+} else if(cats.some(c=>c.id==cat)){
+  // cat قبلی حفظ میشه
+} else {
+  cat='all';
+  sessionStorage.removeItem('lastCat');
+}
   if(cat!='all' && !cats.some(c=>c.id==cat)) cat='all';
 
   // فیلترهای فعال از URL
@@ -182,7 +190,12 @@ cat = (urlCat && cats.some(c=>c.id==urlCat)) ? urlCat : 'all';
   box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
   box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
   box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
-  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const p=new URLSearchParams();if(b.dataset.c!='all')p.set('cat',b.dataset.c);location.search=p.toString();location.reload()});
+  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+  const p=new URLSearchParams();
+  if(b.dataset.c!='all'){p.set('cat',b.dataset.c);sessionStorage.setItem('lastCat',b.dataset.c)}
+  else{sessionStorage.removeItem('lastCat')}
+  location.search=p.toString();
+});
 }
   
 // ==================== PRODUCT PAGE ====================
