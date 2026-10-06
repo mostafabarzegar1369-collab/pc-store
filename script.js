@@ -155,7 +155,7 @@ if(urlCat && cats.some(c=>c.id==urlCat)){
               const p=new URLSearchParams(location.search);
               if(b.dataset.val) p.set('fo'+b.dataset.fid,b.dataset.val);
               else p.delete('fo'+b.dataset.fid);
-              location.search=p.toString();location.reload();
+              location.search=p.toString();
             });
           }
         }
