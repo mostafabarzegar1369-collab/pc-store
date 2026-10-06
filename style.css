@@ -383,3 +383,7 @@ img,svg,video{max-width:100%}
 .srcs{list-style:none;margin:8px 0;font-size:13px;color:var(--mu)}
 .srcs li{padding:3px 0}.srcs a{color:var(--pl);margin-right:6px}
 .sg .note{margin:6px 0;padding:8px 12px;font-size:13px}
+
+.slider .stage{min-height:380px}
+.slider .hero{min-height:420px}
+.simg{width:auto;max-height:360px}
