@@ -153,7 +153,13 @@ async function adminPage(){
   toast(u&&u.ok&&u.d.length?'وضعیت سفارش ذخیره شد':'ذخیره نشد. دوباره تلاش کنید.')});
 }
 const priceTxt=p=>(p.old?`<s class="old">${fa(p.old)}</s> `:'')+fa(p.price)+' تومان';
-const normP=d=>{if(!d||!/^[\w-]+$/.test(d.id)||!cats.some(c=>c.id==d.cat))return null;return{id:d.id,cat:d.cat,name:String(d.name||''),price:(()=>{const b=+d.price||0,c=Math.min(90,Math.max(0,parseInt(d.discount)||0));return c?Math.max(0,Math.round(b*(100-c)/100/1000)*1000):b})(),old:(()=>{const b=+d.price||0,c=Math.min(90,Math.max(0,parseInt(d.discount)||0));return c?b:0})(),disc:Math.min(90,Math.max(0,parseInt(d.discount)||0)),specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''}};
+const normP = d => {
+  if(!d || !/^[\w-]+$/.test(d.id)) return null;
+  // قبول کن اگه cat توی cats هاردکد هست، یا category_id داره
+  if(!cats.some(c => c.id == d.cat) && !d.category_id) return null;
+  const cat = d.cat || (d.category_id ? String(d.category_id) : 'cpu');
+  return {id:d.id, cat:cat, name:String(d.name||''), price:(()=>{const b=+d.price||0,c=Math.min(90,Math.max(0,parseInt(d.discount)||0));return c?Math.max(0,Math.round(b*(100-c)/100/1000)*1000):b})(), old:(()=>{const b=+d.price||0,c=Math.min(90,Math.max(0,parseInt(d.discount)||0));return c?b:0})(), disc:Math.min(90,Math.max(0,parseInt(d.discount)||0)), specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[], desc:d.description||'', best:d.best?1:0, new:d.is_new?1:0, img:d.image||''};
+};
 async function loadProducts(){
  try{const r=await fetch(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}});
   if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length)return d.map(normP).filter(Boolean)}}catch(e){}
@@ -365,22 +371,23 @@ async function adminProducts(){
   const subs2 = dbCats.filter(c => Number(c.parent_id) === cidNum).map(c => Number(c.id));
   return dbFilters.filter(f2 => Number(f2.category_id) === cidNum || subs2.includes(Number(f2.category_id)));
 };
-    const renderFilterOptions = (catId) => {
-      const fl = getFiltersForCat(catId);
-      const wrap = $('#f_filters');
-      if(!wrap) return;
-      if(!fl.length){ wrap.innerHTML = '<p class="mu">برای این گروه هنوز فیلتری تعریف نشده.</p>'; return; }
-      wrap.innerHTML = fl.map(f2 => {
-        const opts = dbOptions.filter(o => o.filter_id == f2.id);
-        return `<div style="margin:8px 0">
-          <label>${esc(f2.name)}</label>
-          <select class="filter-select" data-fid="${f2.id}">
-            <option value="">— انتخاب کنید —</option>
-            ${opts.map(o=>`<option value="${o.id}">${esc(o.value)}</option>`).join('')}
-          </select>
-        </div>`;
-      }).join('');
-    };
+    const renderFilterOptions = async (catId) => {
+  if(!dbFilters.length) await loadCats();
+  const fl = getFiltersForCat(catId);
+  const wrap = $('#f_filters');
+  if(!wrap) return;
+  if(!fl.length){ wrap.innerHTML = '<p class="mu">برای این گروه هنوز فیلتری تعریف نشده.</p>'; return; }
+  wrap.innerHTML = fl.map(f2 => {
+    const opts = dbOptions.filter(o => Number(o.filter_id) === Number(f2.id));
+    return `<div style="margin:8px 0">
+      <label>${esc(f2.name)}</label>
+      <select class="filter-select" data-fid="${f2.id}">
+        <option value="">— انتخاب کنید —</option>
+        ${opts.map(o=>`<option value="${o.id}">${esc(o.value)}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+};
     f.innerHTML=`<div class="apf"><h3>${isNew?'محصول جدید':'ویرایش محصول'}</h3>
     <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
     <label>گروه<select id="f_cat">
