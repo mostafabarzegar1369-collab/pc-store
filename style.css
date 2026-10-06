@@ -384,6 +384,6 @@ img,svg,video{max-width:100%}
 .srcs li{padding:3px 0}.srcs a{color:var(--pl);margin-right:6px}
 .sg .note{margin:6px 0;padding:8px 12px;font-size:13px}
 
-.slider .stage{min-height:380px}
-.slider .hero{min-height:420px}
-..simg{width:auto;max-height:360px;min-width:280px;object-fit:contain}
+.slider .stage{min-height:320px;display:flex;align-items:center;justify-content:center}
+.slider .hero{min-height:380px;padding:24px 0}
+.simg{width:100%;max-width:520px;max-height:340px;object-fit:contain;filter:drop-shadow(0 20px 40px rgba(0,0,0,0.4))}mg{width:auto;max-height:360px;min-width:280px;object-fit:contain}
