@@ -274,7 +274,7 @@ function cartPage(){
       status:'pending'
     };
     const r=await rest('orders','POST',orderData).catch(()=>null);
-    if(!r||!r.ok){m.textContent='ثبت سفارش انجام نشد. دوباره تلاش کنید.';return}
+    if(!r||!r.ok){m.textContent='خطا: '+JSON.stringify(r&&r.d||'no response').substring(0,300);return}
     saveCart({});box.innerHTML=`<div class="empty"><i class="ti ti-circle-check"></i><h2>سفارش شما ثبت شد</h2><p>شماره سفارش: ${fa(r.d[0].id)}<br>پرداخت آنلاین در مرحله‌ی بعد اضافه می‌شود.</p><a class="btn" href="orders.html">سفارش‌های من</a></div>`};
 }
 // ==================== ORDERS PAGE ====================
