@@ -233,19 +233,47 @@ function cartPage(){
   const c=cart(),ids=Object.keys(c).filter(id=>products.some(p=>p.id==id)&&c[id]>0);
   if(!ids.length){box.innerHTML='<div class="empty"><i class="ti ti-shopping-cart-off"></i><h2>سبد خرید شما خالی است</h2><p>محصولی انتخاب کنید تا اینجا نمایش داده شود.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';return}
   let total=0;
-  box.innerHTML=ids.map(id=>{const p=products.find(x=>x.id==id),n=c[id];total+=p.price*n;
+  const itemsHTML=ids.map(id=>{const p=products.find(x=>x.id==id),n=c[id];total+=p.price*n;
     return`<div class="row"><div class="pic sm">${pic(p)}</div><div class="inf"><h3>${esc(p.name)}</h3><div class="price">${priceTxt(p)}</div></div>
     <div class="qty"><button data-a="+" data-id="${id}" aria-label="افزایش">+</button><b>${fa(n)}</b><button data-a="-" data-id="${id}" aria-label="کاهش">−</button></div>
-    <div class="lt">${fa(p.price*n)}</div><button class="rm" data-a="x" data-id="${id}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`}).join('')+
+    <div class="lt">${fa(p.price*n)}</div><button class="rm" data-a="x" data-id="${id}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`}).join('');
+  box.innerHTML=itemsHTML+
    `<div class="sum"><span>جمع کل</span><b>${fa(total)} تومان</b></div>
+   <div style="margin:20px 0;padding:16px;background:var(--card);border-radius:12px">
+     <h3 style="margin-bottom:12px">اطلاعات تحویل</h3>
+     <label style="display:block;margin-bottom:8px">نام و نام خانوادگی<input id="o_name" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid #444;background:#1a1428;color:#fff" value="${session()?(session().name||''):''}"></label>
+     <label style="display:block;margin-bottom:8px">شماره تماس<input id="o_phone" inputmode="numeric" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid #444;background:#1a1428;color:#fff" placeholder="09xxxxxxxxx"></label>
+     <label style="display:block;margin-bottom:8px">آدرس کامل<textarea id="o_addr" rows="2" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid #444;background:#1a1428;color:#fff" placeholder="استان، شهر، خیابان، پلاک، واحد"></textarea></label>
+     <label style="display:block;margin-bottom:8px">کد پستی<input id="o_postal" inputmode="numeric" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid #444;background:#1a1428;color:#fff" placeholder="۱۰ رقم"></label>
+   </div>
    <div class="sumb"><button class="btn ghost" id="clr">خالی کردن سبد</button><button class="btn" id="pay">ثبت سفارش</button></div><div class="err" id="msg"></div>`;
   box.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const k=b.dataset.id,a=b.dataset.a,d=cart();if(a=='+')d[k]++;else if(a=='-')d[k]--;else d[k]=0;if(d[k]<=0)delete d[k];saveCart(d);cartPage()});
   $('#clr').onclick=()=>{saveCart({});cartPage()};
   $('#pay').onclick=async()=>{const m=$('#msg');m.style.color='';
     if(!session()){m.innerHTML='برای ثبت سفارش ابتدا <a href="login.html" style="color:var(--pl)">وارد شوید</a>.';return}
+    const fullName=$('#o_name').value.trim();
+    const phone=$('#o_phone').value.trim();
+    const address=$('#o_addr').value.trim();
+    const postal=$('#o_postal').value.trim();
+    if(!fullName)return m.textContent='نام و نام خانوادگی را بنویسید.';
+    if(!/^09\d{9}$/.test(phone))return m.textContent='شماره تماس باید با ۰۹ شروع و ۱۱ رقم باشد.';
+    if(address.length<10)return m.textContent='آدرس کامل را بنویسید.';
+    if(!/^\d{10}$/.test(postal))return m.textContent='کد پستی باید ۱۰ رقم باشد.';
     m.textContent='در حال ثبت سفارش...';await refreshSession();
     const items=ids.map(id=>{const p=products.find(x=>x.id==id);return{id,name:p.name,price:p.price,qty:c[id]}});
-    const r=await rest('orders','POST',{items,total}).catch(()=>null);
+    const s=session();
+    const orderData={
+      items,
+      total,
+      customer:s.email,
+      user_id:null,
+      full_name:fullName,
+      phone,
+      address,
+      postal_code:postal,
+      status:'pending'
+    };
+    const r=await rest('orders','POST',orderData).catch(()=>null);
     if(!r||!r.ok){m.textContent='ثبت سفارش انجام نشد. دوباره تلاش کنید.';return}
     saveCart({});box.innerHTML=`<div class="empty"><i class="ti ti-circle-check"></i><h2>سفارش شما ثبت شد</h2><p>شماره سفارش: ${fa(r.d[0].id)}<br>پرداخت آنلاین در مرحله‌ی بعد اضافه می‌شود.</p><a class="btn" href="orders.html">سفارش‌های من</a></div>`};
 }
