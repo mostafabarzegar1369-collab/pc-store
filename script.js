@@ -287,7 +287,20 @@ async function ordersPage(){
   if(!r||!r.ok)return box.innerHTML='<p class="err">بارگذاری سفارش‌ها انجام نشد.</p>';
   if(!r.d.length)return empty('ti-package','هنوز سفارشی ندارید','<a class="btn" href="index.html">دیدن محصولات</a>');
   const st={pending:'در انتظار پرداخت',paid:'پرداخت‌شده',shipped:'ارسال‌شده',canceled:'لغوشده'};
-  box.innerHTML=r.d.map(o=>`<div class="row ord"><div><b>سفارش ${fa(o.id)}</b><div class="mu">${new Date(o.created_at).toLocaleDateString('fa-IR')}</div><div>${o.items.map(i=>esc(i.name)+' × '+fa(i.qty)).join('، ')}</div></div><div class="lt">${fa(o.total)} تومان<br><small>${st[o.status]||esc(o.status)}</small></div></div>`).join('');
+  box.innerHTML=r.d.map(o=>`<div class="row ord" style="flex-direction:column;align-items:stretch;gap:8px">
+     <div style="display:flex;justify-content:space-between;align-items:center">
+       <b>سفارش ${fa(o.id)}</b>
+       <span class="mu">${new Date(o.created_at).toLocaleDateString('fa-IR')}</span>
+     </div>
+     <div>${o.items.map(i=>esc(i.name)+' × '+fa(i.qty)).join('، ')}</div>
+     <div><b>${fa(o.total)} تومان</b> · <small>${st[o.status]||esc(o.status)}</small></div>
+     <div style="background:#1a1428;padding:10px;border-radius:8px;font-size:13px;line-height:1.8">
+       <div><b>تحویل به:</b> ${esc(o.full_name||'—')}</div>
+       <div><b>تلفن:</b> ${esc(o.phone||'—')}</div>
+       <div><b>آدرس:</b> ${esc(o.address||'—')}</div>
+       <div><b>کد پستی:</b> ${esc(o.postal_code||'—')}</div>
+     </div>
+   </div>`).join('');
 }
 
 // ==================== ADMIN PAGE (ORDERS) ====================
@@ -303,8 +316,26 @@ async function adminPage(){
   const st={pending:'در انتظار پرداخت',paid:'پرداخت‌شده',shipped:'ارسال‌شده',canceled:'لغوشده'};
   const cnt=k=>r.d.filter(o=>o.status==k).length,sold=r.d.filter(o=>o.status=='paid'||o.status=='shipped').reduce((x,o)=>x+o.total,0);
   box.innerHTML=`<div class="stats"><div><b>${fa(r.d.length)}</b><span>همه‌ی سفارش‌ها</span></div><div><b>${fa(cnt('pending'))}</b><span>در انتظار پرداخت</span></div><div><b>${fa(sold)}</b><span>فروش تومان</span></div></div>`+
-   (r.d.length?r.d.map(o=>`<div class="row ord"><div><b>سفارش ${fa(o.id)}</b> <span class="mu">${new Date(o.created_at).toLocaleDateString('fa-IR')}</span><div class="mu">${esc(o.customer||'ایمیل ثبت نشده')}</div><div>${o.items.map(i=>esc(i.name)+' × '+fa(i.qty)).join('، ')}</div></div>
-   <div class="lt">${fa(o.total)} تومان<br><select data-id="${o.id}" aria-label="وضعیت">${Object.keys(st).map(k=>`<option value="${k}" ${o.status==k?'selected':''}>${st[k]}</option>`).join('')}</select></div></div>`).join(''):'<p>هنوز سفارشی ثبت نشده است.</p>');
+   (r.d.length?r.d.map(o=>`<div class="row ord" style="flex-direction:column;align-items:stretch;gap:10px">
+     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+       <b>سفارش ${fa(o.id)}</b>
+       <span class="mu">${new Date(o.created_at).toLocaleDateString('fa-IR')}</span>
+     </div>
+     <div style="background:#1a1428;padding:12px;border-radius:10px;line-height:1.9;font-size:14px">
+       <div><b>👤 نام:</b> ${esc(o.full_name||'—')}</div>
+       <div><b>📧 ایمیل:</b> ${esc(o.customer||'—')}</div>
+       <div><b>📱 تلفن:</b> ${o.phone?`<a href="tel:${esc(o.phone)}" style="color:var(--pl)">${esc(o.phone)}</a>`:'—'}</div>
+       <div><b>📍 آدرس:</b> ${esc(o.address||'—')}</div>
+       <div><b>📮 کد پستی:</b> ${esc(o.postal_code||'—')}</div>
+     </div>
+     <div><b>محصولات:</b> ${o.items.map(i=>esc(i.name)+' × '+fa(i.qty)).join('، ')}</div>
+     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+       <b>جمع: ${fa(o.total)} تومان</b>
+       <select data-id="${o.id}" aria-label="وضعیت" style="padding:6px 10px;border-radius:8px;background:#1a1428;color:#fff;border:1px solid #444">
+         ${Object.keys(st).map(k=>`<option value="${k}" ${o.status==k?'selected':''}>${st[k]}</option>`).join('')}
+       </select>
+     </div>
+   </div>`).join(''):'<p>هنوز سفارشی ثبت نشده است.</p>');
   box.querySelectorAll('select').forEach(x=>x.onchange=async()=>{
     const u=await rest('orders?id=eq.'+x.dataset.id,'PATCH',{status:x.value}).catch(()=>null);
     toast(u&&u.ok?'وضعیت ذخیره شد':'ذخیره نشد');});
