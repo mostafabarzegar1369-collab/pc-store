@@ -79,12 +79,16 @@ function header(){
   <nav class="dn"><div class="dd mega"><a href="index.html#cats">دسته‌بندی‌ها <i class="ti ti-chevron-down"></i></a><div class="mega-p">${cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</a>`).join('')}</div></div>
   ${cats.slice(0,2).map(c=>`<a href="${qlink(c)}">${esc(c.n)}</a>`).join('')}<a href="games.html">معرفی بازی‌ها</a></nav>
   <input class="hs" id="hs" placeholder="جستجو در محصولات" aria-label="جستجو">
-  <div class="acts"><a href="cart.html" class="cartl"><i class="ti ti-shopping-cart"></i> <b id="cc">${count()}</b></a>
-  ${me?`${me.adm?'<a href="admin.html">مدیریت</a>':''}<a href="orders.html">سفارش‌ها</a><span>${esc(me.name)}</span><button class="btn ghost" id="out">خروج</button>`
-   :`<a class="btn ghost" href="login.html">ورود</a><a class="btn" href="register.html">ثبت‌نام</a>`}</div></div></header>
+  <div class="acts">
+    <a href="wishlist.html" class="cartl" style="margin-left:10px"><i class="ti ti-heart"></i> <b class="wish-badge" style="display:none;background:#e5384f;color:#fff;padding:2px 6px;border-radius:10px;font-size:12px">0</b></a>
+    <a href="cart.html" class="cartl"><i class="ti ti-shopping-cart"></i> <b id="cc">${count()}</b></a>
+    ${me?`${me.adm?'<a href="admin.html">مدیریت</a>':''}<a href="orders.html">سفارش‌ها</a><span>${esc(me.name)}</span><button class="btn ghost" id="out">خروج</button>`
+     :`<a class="btn ghost" href="login.html">ورود</a><a class="btn" href="register.html">ثبت‌نام</a>`}
+  </div></div></header>
   <div class="ov" id="ov"></div>
   <aside class="drawer" id="dr" aria-label="منو"><div class="dh">${logo()}<button class="x" id="dx" aria-label="بستن"><i class="ti ti-x"></i></button></div>
   <div class="dq"><a href="index.html"><i class="ti ti-home"></i>خانه</a><a href="games.html"><i class="ti ti-device-gamepad-2"></i>معرفی بازی‌ها</a>
+  <a href="wishlist.html"><i class="ti ti-heart"></i>علاقه‌مندی‌ها</a>
   <a href="cart.html"><i class="ti ti-shopping-cart"></i>سبد خرید<b class="bdg">${count()}</b></a>
   ${me?`${me.adm?'<a href="admin.html"><i class="ti ti-shield-lock"></i>پنل مدیریت</a>':''}<a href="orders.html"><i class="ti ti-package"></i>سفارش‌های من</a><button class="qb" id="out2"><i class="ti ti-logout"></i>خروج (${esc(me.name)})</button>`
    :`<a href="login.html"><i class="ti ti-login"></i>ورود</a><a href="register.html"><i class="ti ti-user-plus"></i>ثبت‌نام</a>`}</div>
@@ -97,7 +101,12 @@ function header(){
   dr.querySelectorAll('a').forEach(x=>x.addEventListener('click',()=>tog(false)));
   document.onkeydown=e=>{if(e.key=='Escape')tog(false)};
   ['#out','#out2'].forEach(k=>{const o=$(k);if(o)o.onclick=logout});
-  const hs=$('#hs');if(hs)hs.onkeydown=e=>{if(e.key=='Enter')location='index.html?q='+encodeURIComponent(hs.value.trim())+'#shop'};
+  const hs=$('#hs');
+  if(hs){
+    hs.onkeydown=e=>{if(e.key=='Enter')location='index.html?q='+encodeURIComponent(hs.value.trim())+'#shop'};
+    hs.oninput=()=>{ q=hs.value.trim(); if(location.pathname.includes('index.html')||location.pathname==='/'||location.pathname==='/pc-store/'){ shop(); } };
+  }
+  syncWishlist(); // آپدیت قلب‌ها بعد از لود هدر
 }
 function footer(){
   document.querySelectorAll('footer').forEach(x=>x.remove());
@@ -115,7 +124,21 @@ function tilt(el,deg,lift){if(matchMedia('(hover:none)').matches)return;
 const P=new URLSearchParams(location.search);
 let cat=sessionStorage.getItem('lastCat') || 'all';
 let q=(P.get('q')||'').trim();
-
+// ==================== WISHLIST ====================
+const wish=()=>{const w=get('wishlist','[]');return Array.isArray(w)?w:[]};
+const saveWish=w=>{localStorage.setItem('wishlist',JSON.stringify(w));syncWishlist()};
+function syncWishlist(){
+  const w=wish();
+  document.querySelectorAll('.wish-btn').forEach(b=>b.classList.toggle('on',w.includes(b.dataset.id)));
+  const badge=document.querySelector('.wish-badge');
+  if(badge){ if(w.length>0){badge.style.display='inline-block';badge.textContent=w.length;} else {badge.style.display='none';} }
+}
+function toggleWish(id){
+  const w=wish();
+  if(w.includes(id)){saveWish(w.filter(x=>x!=id));toast('از علاقه‌مندی‌ها حذف شد');}
+  else{saveWish([...w,id]);toast('به علاقه‌مندی‌ها اضافه شد');}
+  if(document.getElementById('wishBox')) wishlistPage(); // اگر توی صفحه علاقه‌مندی بود، رفرش کن
+}
 async function shop(){
   const box=$('#shop');if(!box)return;
 
@@ -126,7 +149,6 @@ async function shop(){
   } else { cat='all'; sessionStorage.removeItem('lastCat'); }
   if(cat!='all' && !cats.some(c=>c.id==cat)) cat='all';
 
-  const params=new URLSearchParams(location.search);
   $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${esc(c.n)}</button>`).join('');
 
   const filterToggle = document.getElementById('openFilters');
@@ -156,7 +178,7 @@ async function shop(){
   box.innerHTML=visibleCats.map(c=>{
     let l=products.filter(p=>{
       const pCat = p.category_id ? String(p.category_id) : String(p.cat);
-      return pCat == String(c.dbId) && (q?p.name.includes(q):true);
+      return pCat == String(c.dbId) && (q?p.name.toLowerCase().includes(q.toLowerCase()):true);
     });
     
     if(selectedOpts.length > 0){
@@ -164,7 +186,13 @@ async function shop(){
     }
     
     if(!l.length)return'';
-    return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${priceTxt(p)}</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>';
+    return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}; position:relative;">
+      <button class="wish-btn" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
+      <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
+      <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
+      <div class="price">${priceTxt(p)}</div>
+      <button class="btn add" data-id="${p.id}">افزودن به سبد</button>
+    </div>`).join('')+'</div>';
   }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
 
   box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
@@ -176,6 +204,7 @@ async function shop(){
     else{sessionStorage.removeItem('lastCat')}
     location.search=p.toString();
   });
+  syncWishlist(); 
 }
 // ==================== PRODUCT PAGE ====================
 function productPage(){
@@ -669,13 +698,29 @@ async function loadModalFilters(catId) {
         content.innerHTML = html;
     } catch(e) { content.innerHTML = '<p style="padding:20px;text-align:center;color:#e5384f">خطا در بارگذاری فیلترها.</p>'; }
 }
-
+// ==================== WISHLIST PAGE ====================
+function wishlistPage(){
+  const box=$('#wishBox');if(!box)return;
+  const w=wish();
+  if(!w.length){
+    box.innerHTML='<div class="empty"><i class="ti ti-heart-off"></i><h2>لیست علاقه‌مندی‌های شما خالی است</h2><p>محصولاتی که دوست دارید را با کلیک روی قلب ذخیره کنید.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';
+    return;
+  }
+  const items = products.filter(p=>w.includes(p.id));
+  box.innerHTML=`<div class="grid">`+items.map(p=>`<div class="card" style="--c:${(cats.find(c=>c.id==p.cat)||{col:'#a78bfa'}).col}; position:relative;">
+      <button class="wish-btn on" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
+      <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3></a>
+      <div class="price">${priceTxt(p)}</div>
+      <button class="btn add" data-id="${p.id}">افزودن به سبد</button>
+    </div>`).join('')+'</div>';
+  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
+}
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
   header();footer();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();
   refreshSession().then(()=>{if($('#hdr'))header()});
-  loadProducts().then(d=>{products=d;shop();productPage();cartPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد.</p>'})});
+  loadProducts().then(d=>{products=d;shop();productPage();cartPage();wishlistPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد.</p>'})});
   const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
   document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
 }
