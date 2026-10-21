@@ -1,53 +1,100 @@
-<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پارت‌زون | فروشگاه قطعات کامپیوتر</title><link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"><link rel="stylesheet" href="style.css"></head><body><div id="hdr"></div>
-<main class="wrap"><section class="slider" id="sl" aria-roledescription="carousel" aria-label="پیشنهادهای ویژه"></section>
-<div class="bento"><a class="bg" href="index.html?cat=mouse#shop"><i class="ti ti-device-gamepad-2"></i><b>ست گیمینگ کامل</b><span>موس، کیبورد و هدست</span></a>
-<a href="index.html?cat=gpu#shop"><i class="ti ti-chip"></i><b>کارت گرافیک</b><span>برای بازی سنگین</span></a>
-<a href="index.html?cat=laptop#shop"><i class="ti ti-device-laptop"></i><b>لپ‌تاپ</b><span>کار، تحصیل و بازی</span></a>
-<a href="index.html?cat=ps#shop"><i class="ti ti-brand-playstation"></i><b>کنسول بازی</b><span>PlayStation و لوازم</span></a>
-<a href="games.html"><i class="ti ti-device-gamepad"></i><b>معرفی بازی‌ها</b><span>سخت‌افزار مناسب هر بازی</span></a></div>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>پارت‌زون | فروشگاه قطعات کامپیوتر</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="فروشگاه آنلاین پارت‌زون، مرجع تخصصی خرید قطعات کامپیوتر، کارت گرافیک، پردازنده، لپ‌تاپ و کنسول بازی با بهترین قیمت و ضمانت اصالت کالا.">
+    <meta name="keywords" content="خرید قطعات کامپیوتر, کارت گرافیک, پردازنده, لپ تاپ گیمینگ, کنسول بازی, پارت زون">
+    
+    <!-- Open Graph Meta Tags (برای شبکه‌های اجتماعی) -->
+    <meta property="og:title" content="پارت‌زون | فروشگاه قطعات کامپیوتر">
+    <meta property="og:description" content="مرجع تخصصی خرید قطعات کامپیوتر، کارت گرافیک، پردازنده و لپ‌تاپ با بهترین قیمت.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://mostafabarzegar1369-collab.github.io/pc-store/images/slide1.webp">
 
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>پارت‌زون | فروشگاه قطعات کامپیوتر</title>
-<meta name="description" content="فروشگاه آنلاین پارت‌زون، مرجع تخصصی خرید قطعات کامپیوتر، کارت گرافیک، پردازنده، لپ‌تاپ و کنسول بازی با بهترین قیمت و ضمانت اصالت کالا.">
-<meta name="keywords" content="خرید قطعات کامپیوتر, کارت گرافیک, پردازنده, لپ تاپ گیمینگ, کنسول بازی, پارت زون">
-<meta property="og:title" content="پارت‌زون | فروشگاه قطعات کامپیوتر">
-<meta property="og:description" content="مرجع تخصصی خرید قطعات کامپیوتر، کارت گرافیک، پردازنده و لپ‌تاپ با بهترین قیمت.">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://mostafabarzegar1369-collab.github.io/pc-store/images/slide1.webp">
-<div class="feat"><div><i class="ti ti-truck-delivery" style="--c:#a78bfa"></i><b>ارسال سریع</b><span>تحویل به سراسر کشور</span></div><div><i class="ti ti-shield-check" style="--c:#8b5cf6"></i><b>ضمانت اصالت</b><span>کالای اورجینال</span></div><div><i class="ti ti-headset" style="--c:#818cf8"></i><b>پشتیبانی</b><span>راهنمایی در خرید</span></div><div><i class="ti ti-lock" style="--c:#c084fc"></i><b>پرداخت امن</b><span>ثبت سفارش مطمئن</span></div></div>
-<h2 class="g" style="--c:#ff4fa3"><i class="ti ti-trophy"></i>پرفروش‌ترین‌ها</h2>
-<div class="rail" id="best"></div>
-<h2 class="g" id="cats" style="--c:#8b5cf6"><i class="ti ti-category"></i>دسته‌بندی‌ها</h2>
-<div class="strip"><button class="sa r" aria-label="قبلی"><i class="ti ti-chevron-right"></i></button><div class="tiles" id="tiles"></div><button class="sa l" aria-label="بعدی"><i class="ti ti-chevron-left"></i></button></div>
-<h2 class="g" style="--c:#7c4dff"><i class="ti ti-flame"></i>همه‌ی محصولات</h2>
-<div class="chips" id="chips"></div>
-<div id="filters" class="filters"></div>
-  <!-- دکمه باز کردن فیلترها -->
-<div style="text-align:left; margin-bottom:15px; padding:0 15px;">
-  <button id="openFilters" class="btn ghost filter-toggle-btn" style="padding:8px 16px; border-radius:20px; font-size:14px; display:none;">
-    <i class="ti ti-filter"></i> فیلترها
-  </button>
-</div>
+    <!-- Schema برای گوگل -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "پارت‌زون",
+      "url": "https://mostafabarzegar1369-collab.github.io/pc-store/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://mostafabarzegar1369-collab.github.io/pc-store/index.html?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 
-<!-- پنل کشویی فیلترها -->
-<div id="filterModal" class="filter-modal">
-  <div class="fm-content">
-    <!-- هدر پنل -->
-    <div class="fm-header">
-      <b>فیلترها</b>
-      <button id="closeFilters" class="close-btn"><i class="ti ti-x"></i></button>
-    </div>
-    <!-- بدنه فیلترها -->
-    <div id="filterContent" class="fm-body">
-      <!-- این بخش توسط جاوااسکریپت پر می‌شود -->
-    </div>
-    <!-- دکمه‌های پایین -->
-    <div class="fm-footer">
-      <button id="clearFilters" class="btn-clear">حذف فیلتر</button>
-      <button id="applyFilters" class="btn-apply">مشاهده نتایج</button>
-    </div>
-  </div>
-</div>
-<input class="search" id="search" placeholder="جستجو در محصولات">
-<div id="shop"></div></main>
-<script src="script.js"></script></body></html>
+    <!-- فونت و استایل‌ها -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="hdr"></div>
+    <main class="wrap">
+        <section class="slider" id="sl" aria-roledescription="carousel" aria-label="پیشنهادهای ویژه"></section>
+        
+        <div class="bento">
+            <a class="bg" href="index.html?cat=mouse#shop"><i class="ti ti-device-gamepad-2"></i><b>ست گیمینگ کامل</b><span>موس، کیبورد و هدست</span></a>
+            <a href="index.html?cat=gpu#shop"><i class="ti ti-chip"></i><b>کارت گرافیک</b><span>برای بازی سنگین</span></a>
+            <a href="index.html?cat=laptop#shop"><i class="ti ti-device-laptop"></i><b>لپ‌تاپ</b><span>کار، تحصیل و بازی</span></a>
+            <a href="index.html?cat=ps#shop"><i class="ti ti-brand-playstation"></i><b>کنسول بازی</b><span>PlayStation و لوازم</span></a>
+            <a href="games.html"><i class="ti ti-device-gamepad"></i><b>معرفی بازی‌ها</b><span>سخت‌افزار مناسب هر بازی</span></a>
+        </div>
+
+        <div class="feat">
+            <div><i class="ti ti-truck-delivery" style="--c:#a78bfa"></i><b>ارسال سریع</b><span>تحویل به سراسر کشور</span></div>
+            <div><i class="ti ti-shield-check" style="--c:#8b5cf6"></i><b>ضمانت اصالت</b><span>کالای اورجینال</span></div>
+            <div><i class="ti ti-headset" style="--c:#818cf8"></i><b>پشتیبانی</b><span>راهنمایی در خرید</span></div>
+            <div><i class="ti ti-lock" style="--c:#c084fc"></i><b>پرداخت امن</b><span>ثبت سفارش مطمئن</span></div>
+        </div>
+
+        <h2 class="g" style="--c:#ff4fa3"><i class="ti ti-trophy"></i>پرفروش‌ترین‌ها</h2>
+        <div class="rail" id="best"></div>
+        
+        <h2 class="g" id="cats" style="--c:#8b5cf6"><i class="ti ti-category"></i>دسته‌بندی‌ها</h2>
+        <div class="strip">
+            <button class="sa r" aria-label="قبلی"><i class="ti ti-chevron-right"></i></button>
+            <div class="tiles" id="tiles"></div>
+            <button class="sa l" aria-label="بعدی"><i class="ti ti-chevron-left"></i></button>
+        </div>
+
+        <h2 class="g" style="--c:#7c4dff"><i class="ti ti-flame"></i>همه‌ی محصولات</h2>
+        
+        <div class="chips" id="chips"></div>
+        <div id="filters" class="filters"></div>
+
+        <!-- دکمه باز کردن فیلترها -->
+        <div style="text-align:left; margin-bottom:15px; padding:0 15px;">
+            <button id="openFilters" class="btn ghost filter-toggle-btn" style="padding:8px 16px; border-radius:20px; font-size:14px; display:none;">
+                <i class="ti ti-filter"></i> فیلترها
+            </button>
+        </div>
+
+        <!-- پنل کشویی فیلترها -->
+        <div id="filterModal" class="filter-modal">
+            <div class="fm-content">
+                <div class="fm-header">
+                    <b>فیلترها</b>
+                    <button id="closeFilters" class="close-btn"><i class="ti ti-x"></i></button>
+                </div>
+                <div id="filterContent" class="fm-body"></div>
+                <div class="fm-footer">
+                    <button id="clearFilters" class="btn-clear">حذف فیلتر</button>
+                    <button id="applyFilters" class="btn-apply">مشاهده نتایج</button>
+                </div>
+            </div>
+        </div>
+
+        <input class="search" id="search" placeholder="جستجو در محصولات">
+        <div id="shop"></div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
