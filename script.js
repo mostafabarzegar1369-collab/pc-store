@@ -139,6 +139,20 @@ function toggleWish(id){
   else{saveWish([...w,id]);toast('به علاقه‌مندی‌ها اضافه شد');}
   if(document.getElementById('wishBox')) wishlistPage(); // اگر توی صفحه علاقه‌مندی بود، رفرش کن
 }
+// تابع ساخت دکمه خرید/تعداد
+function renderAddBtn(p) {
+    const c = cart();
+    const qty = c[p.id] || 0;
+    if (p.stock <= 0) return `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`;
+    if (qty > 0) {
+        return `<div class="inline-qty">
+            <button class="iq-btn minus" data-id="${p.id}">−</button>
+            <span>${qty}</span>
+            <button class="iq-btn plus" data-id="${p.id}">+</button>
+        </div>`;
+    }
+    return `<button class="btn add" data-id="${p.id}">افزودن به سبد</button>`;
+}
 async function shop(){
   const box=$('#shop');if(!box)return;
 
@@ -191,12 +205,14 @@ async function shop(){
       <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
       <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
       <div class="price">${priceTxt(p)}</div>
-      ${p.stock>0 ? `<button class="btn add" data-id="${p.id}">افزودن به سبد</button>` : `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`}
+      ${renderAddBtn(p)}
     </div>`).join('')+'</div>';
   }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
 
   box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
   box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
+  box.querySelectorAll('.iq-btn.plus').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);shop();});
+  box.querySelectorAll('.iq-btn.minus').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)-1;if(c[b.dataset.id]<=0)delete c[b.dataset.id];saveCart(c);shop();});
   box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
   $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
     const p=new URLSearchParams();
