@@ -135,34 +135,18 @@ async function shop(){
   // چیپ‌های گروه
   $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${esc(c.n)}</button>`).join('');
 
-  // بارگذاری فیلترها برای گروه فعال
-  const filtersBox=$('#filters');
-  if(filtersBox) filtersBox.innerHTML='';
-  if(cat!='all' && filtersBox){
-    const activeCat=cats.find(c=>c.id==cat);
-    if(activeCat && activeCat.dbId){
-      try{
-        const fr=await fetch(SB+'/rest/v1/filters?select=*&category_id=eq.'+activeCat.dbId+'&order=created_at.asc',{headers:{apikey:KEY}});
-        const or=await fetch(SB+'/rest/v1/filter_options?select=*&order=created_at.asc',{headers:{apikey:KEY}});
-        if(fr.ok && or.ok){
-          const fList=await fr.json(),oList=await or.json();
-          if(fList.length){
-            filtersBox.innerHTML=fList.map(f=>{
-              const opts=oList.filter(o=>String(o.filter_id)===String(f.id));
-              const curVal=params.get('fo'+f.id)||'';
-              return `<div class="filter-group"><b>${esc(f.name)}</b><div class="filter-opts"><button class="fopt ${!curVal?'on':''}" data-fid="${f.id}" data-val="">همه</button>${opts.map(o=>`<button class="fopt ${curVal==o.id?'on':''}" data-fid="${f.id}" data-val="${o.id}">${esc(o.value)}</button>`).join('')}</div></div>`;
-            }).join('');
-            filtersBox.querySelectorAll('.fopt').forEach(b=>b.onclick=()=>{
-              const p=new URLSearchParams(location.search);
-              if(b.dataset.val) p.set('fo'+b.dataset.fid,b.dataset.val);
-              else p.delete('fo'+b.dataset.fid);
-              location.search=p.toString();
-            });
-          }
-        }
-      }catch(e){console.warn('filter load failed',e)}
-    }
-  }
+  // مدیریت دکمه فیلترها
+const filterToggle = document.getElementById('openFilters');
+if (cat !== 'all') {
+    filterToggle.style.display = 'inline-flex';
+    filterToggle.onclick = () => {
+        document.getElementById('filterModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        loadModalFilters(cat); // فراخوانی تابع جدید
+    };
+} else {
+    filterToggle.style.display = 'none';
+}
 
   // ==== اعمال فیلترهای انتخاب‌شده ====
   const selectedOpts=[];
@@ -673,6 +657,77 @@ if(!isNew && p.id){
   load()
 }
 
+// ==================== NEW FILTER MODAL ====================
+document.getElementById('closeFilters').onclick = () => {
+    document.getElementById('filterModal').style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+document.getElementById('clearFilters').onclick = () => {
+    const url = new URL(location.href);
+    const keysToRemove = [];
+    url.searchParams.forEach((v, k) => { if(k.startsWith('fo')) keysToRemove.push(k); });
+    keysToRemove.forEach(k => url.searchParams.delete(k));
+    location.href = url.toString();
+};
+
+document.getElementById('applyFilters').onclick = () => {
+    const url = new URL(location.href);
+    // پاک کردن فیلترهای قبلی در URL
+    const keysToRemove = [];
+    url.searchParams.forEach((v, k) => { if(k.startsWith('fo')) keysToRemove.push(k); });
+    keysToRemove.forEach(k => url.searchParams.delete(k));
+    
+    // اضافه کردن فیلترهای انتخاب شده جدید
+    document.querySelectorAll('#filterContent .filter-opt-btn.on').forEach(btn => {
+        url.searchParams.set('fo' + btn.dataset.fid, btn.dataset.val);
+    });
+    location.href = url.toString();
+};
+
+async function loadModalFilters(catId) {
+    const content = document.getElementById('filterContent');
+    content.innerHTML = '<p style="padding:20px;text-align:center;color:#a78bfa">در حال بارگذاری...</p>';
+    const activeCat = cats.find(c => c.id === catId);
+    if (!activeCat || !activeCat.dbId) return;
+
+    try {
+        const [fr, or] = await Promise.all([
+            fetch(SB+'/rest/v1/filters?select=*&category_id=eq.'+activeCat.dbId+'&order=created_at.asc',{headers:{apikey:KEY}}),
+            fetch(SB+'/rest/v1/filter_options?select=*&order=created_at.asc',{headers:{apikey:KEY}})
+        ]);
+        if (!fr.ok || !or.ok) throw new Error('Fetch failed');
+        const fList = await fr.json();
+        const oList = await or.json();
+        
+        if (!fList.length) {
+            content.innerHTML = '<p style="padding:20px;text-align:center;color:#a78bfa">فیلتری برای این گروه تعریف نشده است.</p>';
+            return;
+        }
+
+        const urlParams = new URLSearchParams(location.search);
+        let html = '';
+        
+        fList.forEach(f => {
+            const opts = oList.filter(o => String(o.filter_id) === String(f.id));
+            const currentSelected = urlParams.get('fo' + f.id);
+            
+            html += `<div class="filter-row">`;
+            html += `<div class="filter-header" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open')">`;
+            html += `<span>${esc(f.name)}</span><i class="ti ti-chevron-down"></i>`;
+            html += `</div>`;
+            html += `<div class="filter-options">`;
+            opts.forEach(o => {
+                const isOn = String(currentSelected) === String(o.id);
+                html += `<button class="filter-opt-btn ${isOn?'on':''}" data-fid="${f.id}" data-val="${o.id}" onclick="this.classList.toggle('on')">${esc(o.value)}</button>`;
+            });
+            html += `</div></div>`;
+        });
+        content.innerHTML = html;
+    } catch(e) {
+        content.innerHTML = '<p style="padding:20px;text-align:center;color:#e5384f">خطا در بارگذاری فیلترها.</p>';
+    }
+}
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
