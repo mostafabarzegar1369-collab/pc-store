@@ -317,6 +317,13 @@ function cartPage(){
     const orderData={items,total,customer:s.email,user_id:null,full_name:fullName,phone,address,postal_code:postal,status:'pending'};
     const r=await rest('orders','POST',orderData).catch(()=>null);
     if(!r||!r.ok){m.textContent='خطا: '+JSON.stringify(r&&r.d||'no response').substring(0,300);return}
+                              // کسر خودکار موجودی محصولات
+for(const item of items){
+  const prod = products.find(p=>p.id === item.id);
+  if(prod && prod.stock >= item.qty){
+    await rest('products?id=eq.'+item.id, 'PATCH', { stock: prod.stock - item.qty }, 'return=minimal').catch(()=>null);
+  }
+}
     saveCart({});box.innerHTML=`<div class="empty"><i class="ti ti-circle-check"></i><h2>سفارش شما ثبت شد</h2><p>شماره سفارش: ${fa(r.d[0].id)}<br>پرداخت آنلاین در مرحله‌ی بعد اضافه می‌شود.</p><a class="btn" href="orders.html">سفارش‌های من</a></div>`};
 }
 
@@ -389,7 +396,7 @@ const normP=d=>{
   if(!d||!/^[\w-]+$/.test(d.id))return null;
   const b=+d.price||0,disc=Math.min(90,Math.max(0,parseInt(d.discount)||0));
   const finalPrice=disc?Math.max(0,Math.round(b*(100-disc)/100/1000)*1000):b;
-  return {id:d.id,cat: d.cat || (d.category_id?String(d.category_id):''),category_id: d.category_id||null,name:String(d.name||''),price: finalPrice,old: disc?b:0,disc: disc,specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''};
+  return {id:d.id, stock: d.stock || 0, cat: d.cat || (d.category_id?String(d.category_id):''),name:String(d.name||''),price: finalPrice,old: disc?b:0,disc: disc,specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''};
 };
 
 async function loadProducts(){
@@ -400,7 +407,7 @@ async function loadProducts(){
       if(Array.isArray(d)&&d.length) return d.map(normP).filter(Boolean);
     }
   }catch(e){}
-  return (await fetch('products.json')).json();
+  try { return await (await fetch('products.json')).json(); } catch(e) { return []; }
 }
 
 // ==================== BEST RAIL / TILES ====================
@@ -580,6 +587,7 @@ async function adminProducts(){
   const load=async()=>{
     await loadData();
     const r=await rest('products?select=*&order=created_at.desc,id.asc').catch(()=>null);
+    if(r&&r.ok){ for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.includes('/rest/v1/products')) { localStorage.removeItem(key); i--; } } }
     if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد.</p>';return}
     list=r.d;draw()
   };
