@@ -212,41 +212,37 @@ function productPage(){
   const p=products.find(x=>x.id==new URLSearchParams(location.search).get('id'));
   if(!p){box.innerHTML='<div class="empty"><i class="ti ti-package-off"></i><h2>این محصول پیدا نشد</h2><a class="btn" href="index.html">بازگشت به فروشگاه</a></div>';return}
   document.title=p.name;
-  // تنظیم تگ‌های متا برای گوگل
-let metaDesc = document.querySelector('meta[name="description"]');
-if(!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
-metaDesc.content = `خرید ${p.name} با بهترین قیمت ${priceTxt(p)} از فروشگاه پارت‌زون. ${p.desc || 'ارسال سریع و ضمانت اصالت کالا.'}`;
-
-let metaTitle = document.querySelector('meta[property="og:title"]');
-if(!metaTitle) { metaTitle = document.createElement('meta'); metaTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaTitle); }
-metaTitle.content = `${p.name} | پارت‌زون`;
-
-let metaImg = document.querySelector('meta[property="og:image"]');
-if(!metaImg) { metaImg = document.createElement('meta'); metaImg.setAttribute('property', 'og:image'); document.head.appendChild(metaImg); }
-metaImg.content = p.img || 'https://mostafabarzegar1369-collab.github.io/pc-store/images/slide1.webp';
-
-// اضافه کردن Schema (داده‌های ساختاریافته) برای نمایش قیمت در گوگل
-let schema = document.getElementById('productSchema');
-if(schema) schema.remove();
-schema = document.createElement('script');
-schema.id = 'productSchema';
-schema.type = 'application/ld+json';
-schema.textContent = JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": p.name,
-  "image": p.img || "",
-  "description": p.desc || descs[p.cat] || "",
-  "offers": {
-    "@type": "Offer",
-    "priceCurrency": "IRR",
-    "price": p.price * 10, // تبدیل تومان به ریال برای گوگل
-    "availability": "https://schema.org/InStock"
-  }
-});
-document.head.appendChild(schema);
   const c=cats.find(x=>x.id==p.cat)||{id:'',n:'محصول',col:'#a78bfa'};
   const rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
+
+  // تنظیم تگ‌های متا برای گوگل
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if(!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
+  metaDesc.content = `خرید ${p.name} با بهترین قیمت ${priceTxt(p)} از فروشگاه پارت‌زون. ${p.desc || 'ارسال سریع و ضمانت اصالت کالا.'}`;
+
+  let metaTitle = document.querySelector('meta[property="og:title"]');
+  if(!metaTitle) { metaTitle = document.createElement('meta'); metaTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaTitle); }
+  metaTitle.content = `${p.name} | پارت‌زون`;
+
+  let metaImg = document.querySelector('meta[property="og:image"]');
+  if(!metaImg) { metaImg = document.createElement('meta'); metaImg.setAttribute('property', 'og:image'); document.head.appendChild(metaImg); }
+  metaImg.content = p.img || 'https://mostafabarzegar1369-collab.github.io/pc-store/images/slide1.webp';
+
+  // اضافه کردن Schema برای محصول
+  let schema = document.getElementById('productSchema');
+  if(schema) schema.remove();
+  schema = document.createElement('script');
+  schema.id = 'productSchema';
+  schema.type = 'application/ld+json';
+  schema.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": p.name,
+    "image": p.img || "",
+    "description": p.desc || descs[p.cat] || "",
+    "offers": {"@type": "Offer","priceCurrency": "IRR","price": p.price * 10,"availability": "https://schema.org/InStock"}
+  });
+  document.head.appendChild(schema);
 
   box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#shop">${esc(c.n)}</a> / ${esc(p.name)}</div>
   <div class="pd">
@@ -265,12 +261,22 @@ document.head.appendChild(schema);
       <button class="wish-btn" data-id="${r.id}" onclick="event.preventDefault();toggleWish('${r.id}')"><i class="ti ti-heart"></i></button>
       <a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${esc(r.name)}</h3></a>
       <div class="price">${priceTxt(r)}</div>
-    </div>`).join('')}</div>`:''}`;
+    </div>`).join('')}</div>`:''}
+  
+  <!-- بخش نظرات و امتیازات -->
+  <div id="reviewsSection" style="margin-top:40px;">
+    <h2 class="g"><i class="ti ti-star"></i> نظرات و امتیازات</h2>
+    <div id="reviewsList">در حال بارگذاری نظرات...</div>
+    <div id="reviewFormContainer"></div>
+  </div>`;
 
   $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
   tilt($('#pimg'),16,0);zoomable($('#pimg'));$('#cmpp').onclick=()=>toggleCmp(p.id);syncCmp();
   box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
   syncWishlist(); 
+  
+  // لود کردن نظرات
+  loadReviews(p.id);
 }
 
 // ==================== CART PAGE ====================
@@ -762,6 +768,88 @@ function wishlistPage(){
       <button class="btn add" data-id="${p.id}">افزودن به سبد</button>
     </div>`).join('')+'</div>';
   box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
+}
+// ==================== REVIEWS ====================
+async function loadReviews(productId) {
+  const list = document.getElementById('reviewsList');
+  const formBox = document.getElementById('reviewFormContainer');
+  if(!list) return;
+
+  try {
+    const r = await fetch(SB+`/rest/v1/reviews?select=*&product_id=eq.${productId}&order=created_at.desc`, {headers:{apikey:KEY}});
+    const data = await r.json();
+    
+    if(data.length === 0) {
+      list.innerHTML = '<p class="mu">هنوز نظری برای این محصول ثبت نشده است. اولین نفر باشید!</p>';
+    } else {
+      list.innerHTML = data.map(rev => `
+        <div class="review-card">
+          <div class="rev-head">
+            <span class="rev-name">${esc(rev.user_name || 'کاربر')}</span>
+            <span class="rev-date">${new Date(rev.created_at).toLocaleDateString('fa-IR')}</span>
+          </div>
+          <div class="stars" style="margin-bottom:8px;">${'<i class="ti ti-star-filled on"></i>'.repeat(rev.rating)}${'<i class="ti ti-star"></i>'.repeat(5 - rev.rating)}</div>
+          <p class="rev-text">${esc(rev.comment)}</p>
+        </div>
+      `).join('');
+    }
+
+    // ساخت فرم ثبت نظر
+    if(!session()) {
+      formBox.innerHTML = `<p class="mu" style="margin-top:20px;">برای ثبت نظر ابتدا <a href="login.html" style="color:var(--pl)">وارد شوید</a>.</p>`;
+    } else {
+      formBox.innerHTML = `
+        <div class="review-form">
+          <h3>ثبت نظر جدید</h3>
+          <div class="stars" id="ratingStars" style="font-size:24px; margin:10px 0;">
+            <i class="ti ti-star" data-v="1"></i><i class="ti ti-star" data-v="2"></i><i class="ti ti-star" data-v="3"></i><i class="ti ti-star" data-v="4"></i><i class="ti ti-star" data-v="5"></i>
+          </div>
+          <textarea id="revComment" rows="3" placeholder="تجربه خود از این محصول را بنویسید..."></textarea>
+          <button class="btn" id="submitReview" style="margin-top:15px;">ثبت نظر</button>
+        </div>`;
+      
+      let selectedRating = 5;
+      const stars = formBox.querySelectorAll('#ratingStars i');
+      const updateStars = (val) => {
+        stars.forEach((s, i) => s.classList.toggle('on', i < val));
+      };
+      updateStars(5);
+
+      stars.forEach(s => {
+        s.onclick = () => {
+          selectedRating = parseInt(s.dataset.v);
+          updateStars(selectedRating);
+        };
+      });
+
+      document.getElementById('submitReview').onclick = async () => {
+        const comment = document.getElementById('revComment').value.trim();
+        if(comment.length < 5) return toast('لطفاً نظر خود را کامل‌تر بنویسید.');
+        
+        const btn = document.getElementById('submitReview');
+        btn.disabled = true; btn.textContent = 'در حال ثبت...';
+        
+        const s = session();
+        const row = {
+          product_id: productId,
+          user_id: null, // اگر از auth.uid استفاده می‌کنید، null کافی است
+          user_name: s.name || 'کاربر',
+          rating: selectedRating,
+          comment: comment
+        };
+
+        const post = await rest('reviews', 'POST', row).catch(()=>null);
+        btn.disabled = false; btn.textContent = 'ثبت نظر';
+        
+        if(!post || !post.ok) return toast('خطا در ثبت نظر.');
+        toast('نظر شما با موفقیت ثبت شد.');
+        document.getElementById('revComment').value = '';
+        loadReviews(productId); // رفرش لیست
+      };
+    }
+  } catch(e) {
+    list.innerHTML = '<p class="err">خطا در بارگذاری نظرات.</p>';
+  }
 }
 // ==================== INIT ====================
 async function init(){
