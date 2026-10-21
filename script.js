@@ -214,15 +214,30 @@ function productPage(){
   document.title=p.name;
   const c=cats.find(x=>x.id==p.cat)||{id:'',n:'محصول',col:'#a78bfa'};
   const rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
+
   box.innerHTML=`<div class="crumb"><a href="index.html">خانه</a> / <a href="index.html#shop">${esc(c.n)}</a> / ${esc(p.name)}</div>
-  <div class="pd"><div class="pstage"><div class="pic bigp" id="pimg" style="--c:${c.col}">${pic(p)}</div><div class="pshadow"></div><small class="hint">لمس کنید یا نگه دارید تا بزرگ شود</small></div>
-  <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${priceTxt(p)}</div><p class="desc">${esc(p.desc||descs[p.cat]||'توضیحات این محصول به‌زودی اضافه می‌شود.')}</p>
-  <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
-  <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><button class="btn ghost" id="cmpp" data-id="${p.id}"><i class="ti ti-arrows-diff"></i> مقایسه</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div></div></div>
-  ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${esc(r.name)}</h3></a><div class="price">${priceTxt(r)}</div></div>`).join('')}</div>`:''}`;
+  <div class="pd">
+    <div class="pstage" style="position:relative;">
+      <button class="wish-btn" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
+      <div class="pic bigp" id="pimg" style="--c:${c.col}">${pic(p)}</div>
+      <div class="pshadow"></div><small class="hint">لمس کنید یا نگه دارید تا بزرگ شود</small>
+    </div>
+    <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${priceTxt(p)}</div><p class="desc">${esc(p.desc||descs[p.cat]||'توضیحات این محصول به‌زودی اضافه می‌شود.')}</p>
+    <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
+    <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><button class="btn ghost" id="cmpp" data-id="${p.id}"><i class="ti ti-arrows-diff"></i> مقایسه</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div>
+    </div>
+  </div>
+  ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`
+    <div class="card" style="--c:${c.col}; position:relative;">
+      <button class="wish-btn" data-id="${r.id}" onclick="event.preventDefault();toggleWish('${r.id}')"><i class="ti ti-heart"></i></button>
+      <a href="product.html?id=${r.id}"><div class="pic">${pic(r)}</div><h3>${esc(r.name)}</h3></a>
+      <div class="price">${priceTxt(r)}</div>
+    </div>`).join('')}</div>`:''}`;
+
   $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
   tilt($('#pimg'),16,0);zoomable($('#pimg'));$('#cmpp').onclick=()=>toggleCmp(p.id);syncCmp();
   box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
+  syncWishlist(); 
 }
 
 // ==================== CART PAGE ====================
