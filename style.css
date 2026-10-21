@@ -669,3 +669,52 @@ header { background: rgba(8, 7, 13, 0.85) !important; backdrop-filter: blur(12px
   color: #fff !important;
   border-color: #8b5cf6 !important;
 }
+/* ========== NEON PRODUCT CARDS ========== */
+.card {
+  background: #110d1f !important; /* پس‌زمینه تیره‌تر */
+  border: 1px solid rgba(139, 92, 246, 0.2) !important; /* حاشیه بنفش ملایم */
+  border-radius: 16px !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* افکت درخشش وقتی موس روی کارت میره */
+.card:hover {
+  border-color: rgba(139, 92, 246, 0.8) !important;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), inset 0 0 10px rgba(139, 92, 246, 0.1) !important;
+  transform: translateY(-5px);
+}
+
+/* عکس محصول داخل کارت */
+.card .pic {
+  background: transparent !important;
+  padding: 15px !important;
+}
+
+/* اسم محصول */
+.card h3 {
+  color: #ffffff !important;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* قیمت محصول */
+.card .price {
+  color: #a78bfa !important; /* رنگ بنفش روشن برای قیمت */
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* دکمه افزودن به سبد داخل کارت */
+.card .btn.add {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
+  border: none !important;
+  color: white !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4) !important;
+}
+
+.card .btn.add:hover {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6) !important;
+}
