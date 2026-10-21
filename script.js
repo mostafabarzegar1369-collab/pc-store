@@ -212,6 +212,39 @@ function productPage(){
   const p=products.find(x=>x.id==new URLSearchParams(location.search).get('id'));
   if(!p){box.innerHTML='<div class="empty"><i class="ti ti-package-off"></i><h2>این محصول پیدا نشد</h2><a class="btn" href="index.html">بازگشت به فروشگاه</a></div>';return}
   document.title=p.name;
+  // تنظیم تگ‌های متا برای گوگل
+let metaDesc = document.querySelector('meta[name="description"]');
+if(!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
+metaDesc.content = `خرید ${p.name} با بهترین قیمت ${priceTxt(p)} از فروشگاه پارت‌زون. ${p.desc || 'ارسال سریع و ضمانت اصالت کالا.'}`;
+
+let metaTitle = document.querySelector('meta[property="og:title"]');
+if(!metaTitle) { metaTitle = document.createElement('meta'); metaTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaTitle); }
+metaTitle.content = `${p.name} | پارت‌زون`;
+
+let metaImg = document.querySelector('meta[property="og:image"]');
+if(!metaImg) { metaImg = document.createElement('meta'); metaImg.setAttribute('property', 'og:image'); document.head.appendChild(metaImg); }
+metaImg.content = p.img || 'https://mostafabarzegar1369-collab.github.io/pc-store/images/slide1.webp';
+
+// اضافه کردن Schema (داده‌های ساختاریافته) برای نمایش قیمت در گوگل
+let schema = document.getElementById('productSchema');
+if(schema) schema.remove();
+schema = document.createElement('script');
+schema.id = 'productSchema';
+schema.type = 'application/ld+json';
+schema.textContent = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": p.name,
+  "image": p.img || "",
+  "description": p.desc || descs[p.cat] || "",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "IRR",
+    "price": p.price * 10, // تبدیل تومان به ریال برای گوگل
+    "availability": "https://schema.org/InStock"
+  }
+});
+document.head.appendChild(schema);
   const c=cats.find(x=>x.id==p.cat)||{id:'',n:'محصول',col:'#a78bfa'};
   const rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
 
