@@ -459,3 +459,14 @@ header { background: rgba(8, 7, 13, 0.85) !important; backdrop-filter: blur(12px
 
 /* 7. حذف پس‌زمینه زرد و بنفش روشن از کارت‌های خاص */
 .bento .bg { background: #1c1030 !important; border: 1px solid rgba(139, 92, 246, 0.3) !important; }
+/* 8. اصلاح قهوه‌ای شدن متن‌های اسلایدر */
+.hero h1, .hero p, .hero small, .hero .hl, .hero .btn.ghost { color: #ffffff !important; }
+.hero .hl { text-shadow: 0 0 20px rgba(139, 92, 246, 0.8); }
+
+/* 9. اصلاح کارت ست گیمینگ (bento) */
+.bento a.bg { 
+  background: #1a1428 !important; 
+  border: 1px solid rgba(139, 92, 246, 0.4) !important; 
+}
+.bento a.bg b, .bento a.bg span { color: #ffffff !important; }
+.bento a.bg i { color: var(--pl) !important; }
