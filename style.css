@@ -730,3 +730,21 @@ header { position: sticky !important; top: 0; z-index: 1000; background: rgba(13
 /* ========== INSTANT SEARCH ========== */
 .hs { width: 200px; transition: width 0.3s ease; }
 .hs:focus { width: 250px; outline: none; border-color: #8b5cf6; }
+/* ========== REVIEWS & RATINGS ========== */
+.stars { display: inline-flex; gap: 4px; color: #555; font-size: 20px; }
+.stars i { cursor: pointer; transition: 0.2s; }
+.stars i.on { color: #fbbf24; /* رنگ طلایی */ }
+.stars i:hover { transform: scale(1.2); }
+
+.review-card {
+  background: #1a1428; padding: 15px; border-radius: 12px;
+  margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05);
+}
+.review-card .rev-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+.review-card .rev-name { font-weight: bold; color: var(--pl); }
+.review-card .rev-date { color: #888; font-size: 12px; }
+.review-card .rev-text { color: #ddd; line-height: 1.6; font-size: 14px; }
+
+.review-form { background: #141124; padding: 20px; border-radius: 12px; border: 1px solid rgba(139,92,246,0.3); margin-top: 20px; }
+.review-form textarea { width: 100%; background: #0d0817; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 8px; margin-top: 10px; resize: vertical; }
+.review-form textarea:focus { outline: none; border-color: var(--p); }
