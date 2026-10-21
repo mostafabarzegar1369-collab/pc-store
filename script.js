@@ -50,7 +50,7 @@ async function loadCatsFromDB(){
 
 // ==================== STATIC CONFIG ====================
 const CAT_IMAGES=[];
-let _cfg;const siteCfg=()=>_cfg||(_cfg=fetch('site.json').then(r=>r.ok?r.json():{}).catch(()=>({})));
+let _cfg;const siteCfg=()=>_cfg||(_cfg=fetch('site.json?t='+Date.now()).then(r=>r.ok?r.json():{}).catch(()=>({})));
 let products=[];
 const descs={cpu:'پردازنده‌ی قدرتمند برای بازی و کارهای سنگین.',gpu:'کارت گرافیک برای بازی در کیفیت بالا.',mb:'مادربرد پایدار با امکانات کامل.',ram:'حافظه‌ی سریع برای بالا بردن سرعت سیستم.',ssd:'ذخیره‌سازی سریع و مطمئن.',psu:'پاور پایدار با توان مناسب.',case:'قاب کیس با جریان هوای خوب.',cool:'خنک‌کننده برای دمای پایین‌تر.',mon:'مانیتور با تصویر شفاف.',laptop:'لپ‌تاپ مناسب کار، تحصیل و بازی.',ps:'کنسول بازی برای تجربه‌ی بازی روی تلویزیون.',mouse:'موس دقیق و سبک.',kb:'کیبورد با حس تایپ عالی.',head:'هدست با صدای شفاف.'};
 const icon=p=>{const c=cats.find(x=>x.id==p.cat);return c?c.i:'ti-box'};
