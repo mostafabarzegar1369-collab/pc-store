@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin-products.html
+Disallow: /admin-categories.html
+Disallow: /admin-prices.html
+
+Sitemap: https://mostafabarzegar1369-collab.github.io/pc-store/sitemap.xml
