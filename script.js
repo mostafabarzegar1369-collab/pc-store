@@ -200,19 +200,42 @@ async function shop(){
     }
     
     if(!l.length)return'';
-    return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}; position:relative;">
-      <button class="wish-btn" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
-      <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
-      <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
-      <div class="price">${priceTxt(p)}</div>
-      ${renderAddBtn(p)}
-    </div>`).join('')+'</div>';
+    return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>{
+      
+      // منطق نمایش دکمه خرید
+      const cartData = cart();
+      const qty = cartData[p.id] || 0;
+      let addBtn = '';
+      
+      if(p.stock <= 0) {
+          addBtn = `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`;
+      } else if(qty > 0) {
+          addBtn = `<div class="inline-qty">
+              <button class="iq-btn minus" data-id="${p.id}">−</button>
+              <span>${qty}</span>
+              <button class="iq-btn plus" data-id="${p.id}">+</button>
+          </div>`;
+      } else {
+          addBtn = `<button class="btn add" data-id="${p.id}">افزودن به سبد</button>`;
+      }
+
+      return `<div class="card" style="--c:${c.col}; position:relative;">
+        <button class="wish-btn" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
+        <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
+        <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
+        <div class="price">${priceTxt(p)}</div>
+        ${addBtn}
+      </div>`;
+    }).join('')+'</div>';
   }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
 
   box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
-  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
+  
+  // رویداد کلیک برای دکمه‌ها
+  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);shop();});
   box.querySelectorAll('.iq-btn.plus').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);shop();});
   box.querySelectorAll('.iq-btn.minus').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)-1;if(c[b.dataset.id]<=0)delete c[b.dataset.id];saveCart(c);shop();});
+  
   box.querySelectorAll('.cmpb').forEach(b=>b.onclick=()=>toggleCmp(b.dataset.id));syncCmp();
   $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
     const p=new URLSearchParams();
@@ -269,7 +292,7 @@ function productPage(){
     </div>
     <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${priceTxt(p)}</div><p class="desc">${esc(p.desc||descs[p.cat]||'توضیحات این محصول به‌زودی اضافه می‌شود.')}</p>
     <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
-    <div class="buy">${p.stock>0 ? `<button class="btn" id="addp">افزودن به سبد</button>` : `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`}
+    <div class="buy">${p.stock>0 ? `<button class="btn" id="addp">افزودن به سبد</button>` : `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`}</div>
     </div>
   </div>
   ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`
@@ -286,7 +309,8 @@ function productPage(){
     <div id="reviewFormContainer"></div>
   </div>`;
 
-  $('#addp').onclick=()=>{const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
+  const addpBtn = $('#addp');
+  if(addpBtn) addpBtn.onclick = () => {const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
   tilt($('#pimg'),16,0);zoomable($('#pimg'));$('#cmpp').onclick=()=>toggleCmp(p.id);syncCmp();
   box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
   syncWishlist(); 
