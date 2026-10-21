@@ -5,6 +5,26 @@ const get=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||d)}catch(e){ret
 const SB='https://amhclwujstlipwjjahrs.supabase.co',KEY='sb_publishable_i7OICU1vj-NcXez0FU5c8Q_P2qJP4Yj';
 const sbf=(p,b,t)=>fetch(SB+p,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',...(t?{Authorization:'Bearer '+t}:{})},body:JSON.stringify(b||{})}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}));
 const rest=(p,m,b,pf)=>{const s=session(),h={apikey:KEY,'Content-Type':'application/json',Prefer:pf||'return=representation'};if(s)h.Authorization='Bearer '+s.at;return fetch(SB+'/rest/v1/'+p,{method:m||'GET',headers:h,body:b?JSON.stringify(b):undefined}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}))};
+// تابع جدید برای کش کردن اطلاعات دیتابیس
+const fetchWithCache = async (url, options = {}, ttl = 300000) => {
+  const key = 'cache_' + url;
+  const cached = localStorage.getItem(key);
+  if (cached) {
+    try {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < ttl) {
+        return { ok: true, json: async () => data }; // شبیه‌سازی پاسخ fetch
+      }
+    } catch(e) {}
+  }
+  const r = await fetch(url, options);
+  if (r.ok) {
+    const data = await r.json();
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+    return { ok: true, json: async () => data };
+  }
+  return r;
+};
 const session=()=>get('sb','null');
 const save=d=>{const u=d.user||{};localStorage.setItem('sb',JSON.stringify({name:(u.user_metadata&&u.user_metadata.name)||u.email,email:u.email,at:d.access_token,rt:d.refresh_token,exp:Date.now()+(d.expires_in||3600)*1000,adm:!!(session()||{}).adm}))};
 const logout=()=>{const s=session();if(s)sbf('/auth/v1/logout',{},s.at).catch(()=>{});localStorage.removeItem('sb');location.reload()};
@@ -20,7 +40,7 @@ const catIconsMap={mon:'ti-device-desktop',hard:'ti-server',cpu:'ti-cpu',gpu:'ti
 const catColors=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#8ea2ff','#b9a4ff'];
 async function loadCatsFromDB(){
   try{
-    const r=await fetch(SB+'/rest/v1/categories?select=*&order=created_at.asc',{headers:{apikey:KEY}});
+    const r=await fetchWithCache(SB+'/rest/v1/categories?select=*&order=created_at.asc',{headers:{apikey:KEY}}, 3600000);
     if(!r.ok){cats=[];subs={};return}
     const dbCats=await r.json();
     if(!Array.isArray(dbCats)||!dbCats.length){cats=[];subs={};return}
@@ -291,7 +311,7 @@ const normP=d=>{
 
 async function loadProducts(){
   try{
-    const r=await fetch(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}});
+    const r=await fetchWithCache(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}}, 300000);
     if(r.ok){
       const d=await r.json();
       if(Array.isArray(d)&&d.length) return d.map(normP).filter(Boolean);
