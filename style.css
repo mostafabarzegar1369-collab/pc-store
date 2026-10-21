@@ -1,4 +1,25 @@
-:root{--bg:#120c22;--card:#1d1538;--card2:#2a1f52;--line:#3a2c6b;--p:#7c4dff;--pl:#b9a4ff;--tx:#ece7fc;--mu:#a99cd6}
+:root {
+  /* پس‌زمینه اصلی سایت (مشکی خیلی تیره با ته رنگ آبی) */
+  --bg: #08070d;
+  
+  /* پس‌زمینه کارت‌ها و منوها (کمی روشن‌تر از پس‌زمینه) */
+  --card: #141124;
+  
+  /* رنگ اصلی (دکمه‌ها، المان‌های فعال - بنفش نئونی) */
+  --p: #8b5cf6;
+  
+  /* رنگ روشن‌تر برای هاور و هایلایت (بنفش روشن) */
+  --pl: #a78bfa;
+  
+  /* رنگ متن‌های کم‌رنگ و توضیحات (خاکستری روشن) */
+  --mu: #94a3b8;
+  
+  /* رنگ متن اصلی (سفید) */
+  --text: #ffffff;
+  
+  /* رنگ حاشیه‌ها (بوردرهای ظریف) */
+  --border: rgba(255,255,255,0.08);
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Vazirmatn,Tahoma,sans-serif;background:var(--bg);color:var(--tx);line-height:1.8}
 a{color:inherit;text-decoration:none}
