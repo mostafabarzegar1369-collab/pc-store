@@ -499,3 +499,20 @@ header { background: rgba(8, 7, 13, 0.85) !important; backdrop-filter: blur(12px
 /* بزرگ‌تر کردن فونت‌های اسلایدر برای خوانایی بهتر */
 .hero h1 { font-size: 48px !important; line-height: 1.4 !important; }
 .hero p { font-size: 18px !important; max-width: 450px; }
+/* اصلاح رنگ متن‌های منوی کناری (Drawer) */
+.drawer .dq a, 
+.drawer .dq button,
+.drawer .dt,
+.drawer .acc .ah,
+.drawer .acc .ab a,
+.drawer .acc .ab a:hover {
+  color: #ffffff !important;
+}
+.drawer .dq a:hover,
+.drawer .acc .ah:hover {
+  background: rgba(139, 92, 246, 0.15) !important;
+}
+/* اصلاح دکمه ورود در منو */
+.drawer .dq .qb {
+  color: #ffffff !important;
+}
