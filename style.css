@@ -470,3 +470,32 @@ header { background: rgba(8, 7, 13, 0.85) !important; backdrop-filter: blur(12px
 }
 .bento a.bg b, .bento a.bg span { color: #ffffff !important; }
 .bento a.bg i { color: var(--pl) !important; }
+/* ========== FINAL HERO SINGLE SLIDE OVERRIDES ========== */
+.hero {
+  /* ایجاد یک نور نئونی ملایم در پس‌زمینه به جای رنگ یکنواخت */
+  background: radial-gradient(circle at 30% 50%, rgba(139, 92, 246, 0.15) 0%, #0d0817 60%) !important;
+  border: 1px solid rgba(139, 92, 246, 0.2) !important;
+  box-shadow: 0 0 60px rgba(139, 92, 246, 0.1) !important;
+  padding: 40px !important;
+  display: flex;
+  align-items: center;
+  min-height: 500px;
+}
+
+/* بزرگ‌تر کردن عکس کیس و افزودن سایه نئونی */
+.simg {
+  max-width: 550px !important; /* عکس بزرگ‌تر شد */
+  max-height: 450px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.3)) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8)) !important;
+  transform: scale(1.05); /* کمی بزرگ‌نمایی برای جلوگیری از فضای خالی */
+  transition: transform 0.3s ease;
+}
+
+.simg:hover {
+  transform: scale(1.1);
+}
+
+/* بزرگ‌تر کردن فونت‌های اسلایدر برای خوانایی بهتر */
+.hero h1 { font-size: 48px !important; line-height: 1.4 !important; }
+.hero p { font-size: 18px !important; max-width: 450px; }
