@@ -408,3 +408,54 @@ img,svg,video{max-width:100%}
 .slider .stage{min-height:320px;display:flex;align-items:center;justify-content:center}
 .slider .hero{min-height:380px;padding:24px 0}
 .simg{width:100%;max-width:800px;max-height:640px;object-fit:contain;filter:drop-shadow(0 20px 40px rgba(0,0,0,0.4))}mg{width:auto;max-height:360px;min-width:280px;object-fit:contain}
+/* ========== OVERRIDES FOR DARK NEON THEME ========== */
+
+/* 1. پس‌زمینه هدر */
+header { background: rgba(8, 7, 13, 0.85) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+/* 2. اصلاح اسلایدر (پس‌زمینه تیره و متن سفید) */
+.hero { 
+  background: linear-gradient(135deg, #120c24 0%, #1d103a 50%, #0d0817 100%) !important; 
+  border: 1px solid rgba(139, 92, 246, 0.2); 
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.1);
+}
+.hero h1, .hero p, .hero small, .hero .hl { color: #ffffff !important; }
+.hero .hl { text-shadow: 0 0 20px rgba(139, 92, 246, 0.8); }
+
+/* 3. اصلاح عکس اسلایدر (کوچیک‌تر و با سایه) */
+.simg-wrap { 
+  background: transparent !important; 
+  box-shadow: none !important; 
+  padding: 0 !important; 
+}
+.simg { 
+  max-width: 400px !important; 
+  max-height: 300px !important; 
+  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8)) !important; 
+  object-fit: contain;
+}
+
+/* 4. اصلاح کارت‌های محصولات و دسته‌بندی‌ها (تیره‌تر و با حاشیه نئونی) */
+.card, .bento a, .tiles a {
+  background: #141124 !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+  transition: all 0.3s ease;
+}
+.card:hover, .bento a:hover, .tiles a:hover {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15) !important;
+}
+
+/* 5. اصلاح رنگ متن‌ها در کارت‌ها */
+.card h3, .bento b, .tiles a { color: #ffffff !important; }
+.card .price, .bento span, .tiles span { color: #94a3b8 !important; }
+
+/* 6. اصلاح دکمه‌ها (نئونی) */
+.btn { 
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important; 
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3) !important;
+}
+.btn:hover { box-shadow: 0 6px 25px rgba(139, 92, 246, 0.5) !important; }
+
+/* 7. حذف پس‌زمینه زرد و بنفش روشن از کارت‌های خاص */
+.bento .bg { background: #1c1030 !important; border: 1px solid rgba(139, 92, 246, 0.3) !important; }
