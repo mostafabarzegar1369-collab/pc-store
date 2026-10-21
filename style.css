@@ -516,3 +516,156 @@ header { background: rgba(8, 7, 13, 0.85) !important; backdrop-filter: blur(12px
 .drawer .dq .qb {
   color: #ffffff !important;
 }
+/* ========== FILTER MODAL (DARK NEON THEME) ========== */
+
+/* پنل اصلی */
+.filter-modal {
+  display: none; 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%; 
+  background: #0d0817; /* پس‌زمینه تیره و مشکی */
+  z-index: 99999; 
+  overflow-y: auto; 
+  color: #ffffff;
+}
+
+/* محتوای داخل پنل */
+.fm-content {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* هدر پنل (عنوان و دکمه بستن) */
+.fm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: sticky;
+  top: 0;
+  background: #0d0817;
+  z-index: 10;
+}
+
+.fm-header b {
+  font-size: 18px;
+  color: #fff;
+}
+
+.fm-header .close-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* بدنه فیلترها */
+.fm-body {
+  padding: 0 20px 100px 20px;
+  flex: 1;
+}
+
+/* ردیف هر فیلتر */
+.filter-row {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 16px 0;
+}
+
+/* دکمه فلش‌دار (آکاردئون) */
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 15px;
+  color: #fff;
+}
+
+.filter-header i {
+  color: #a78bfa;
+  transition: transform 0.3s ease;
+}
+
+.filter-header.open i {
+  transform: rotate(-90deg); /* چرخش فلش */
+}
+
+/* گزینه‌ها (به صورت پیش‌فرض بسته) */
+.filter-options {
+  display: none; 
+  padding-top: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-options.open {
+  display: flex; 
+}
+
+/* دکمه‌های داخل گزینه‌ها (چیپ‌ها) */
+.filter-opt-btn {
+  background: #141124;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-opt-btn.on {
+  background: #8b5cf6;
+  color: #fff;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+/* فوتر پایین صفحه (دکمه‌ها) */
+.fm-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #141124;
+  padding: 15px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.fm-footer .btn-clear {
+  flex: 1;
+  background: none;
+  border: 1px solid #e5384f;
+  color: #e5384f;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.fm-footer .btn-apply {
+  flex: 2;
+  background: #8b5cf6;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* دکمه باز کردن فیلترها (بالای لیست محصولات) */
+.filter-toggle-btn {
+  color: #fff !important;
+  border-color: #8b5cf6 !important;
+}
