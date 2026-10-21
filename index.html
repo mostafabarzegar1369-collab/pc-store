@@ -14,7 +14,32 @@
 <h2 class="g" style="--c:#7c4dff"><i class="ti ti-flame"></i>همه‌ی محصولات</h2>
 <div class="chips" id="chips"></div>
 <div id="filters" class="filters"></div>
-<div id="filters"></div>
+  <!-- دکمه باز کردن فیلترها -->
+<div style="text-align:left; margin-bottom:15px; padding:0 15px;">
+  <button id="openFilters" class="btn ghost filter-toggle-btn" style="padding:8px 16px; border-radius:20px; font-size:14px; display:none;">
+    <i class="ti ti-filter"></i> فیلترها
+  </button>
+</div>
+
+<!-- پنل کشویی فیلترها -->
+<div id="filterModal" class="filter-modal">
+  <div class="fm-content">
+    <!-- هدر پنل -->
+    <div class="fm-header">
+      <b>فیلترها</b>
+      <button id="closeFilters" class="close-btn"><i class="ti ti-x"></i></button>
+    </div>
+    <!-- بدنه فیلترها -->
+    <div id="filterContent" class="fm-body">
+      <!-- این بخش توسط جاوااسکریپت پر می‌شود -->
+    </div>
+    <!-- دکمه‌های پایین -->
+    <div class="fm-footer">
+      <button id="clearFilters" class="btn-clear">حذف فیلتر</button>
+      <button id="applyFilters" class="btn-apply">مشاهده نتایج</button>
+    </div>
+  </div>
+</div>
 <input class="search" id="search" placeholder="جستجو در محصولات">
 <div id="shop"></div></main>
 <script src="script.js"></script></body></html>
