@@ -191,7 +191,7 @@ async function shop(){
       <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
       <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
       <div class="price">${priceTxt(p)}</div>
-      <button class="btn add" data-id="${p.id}">افزودن به سبد</button>
+      ${p.stock>0 ? `<button class="btn add" data-id="${p.id}">افزودن به سبد</button>` : `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`}
     </div>`).join('')+'</div>';
   }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
 
@@ -253,7 +253,7 @@ function productPage(){
     </div>
     <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${priceTxt(p)}</div><p class="desc">${esc(p.desc||descs[p.cat]||'توضیحات این محصول به‌زودی اضافه می‌شود.')}</p>
     <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
-    <div class="buy"><button class="btn" id="addp">افزودن به سبد</button><button class="btn ghost" id="cmpp" data-id="${p.id}"><i class="ti ti-arrows-diff"></i> مقایسه</button><a class="btn ghost" href="cart.html">مشاهده سبد</a></div>
+    <div class="buy">${p.stock>0 ? `<button class="btn" id="addp">افزودن به سبد</button>` : `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`}
     </div>
   </div>
   ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`
@@ -599,7 +599,7 @@ async function adminProducts(){
       <div id="apForm"></div>
       <div>${list.map(p=>`<div class="ap-row ${p.active?'':'off'}">
         <div class="pic sm">${p.image?`<img src="${esc(p.image)}" alt="">`:`<i class="ti ${(dbCats.find(c=>String(c.id)===String(p.category_id))||{i:'ti-box'}).i}"></i>`}</div>
-        <div class="inf"><b>${esc(p.name)}</b><div class="mu">${esc(cn(p.category_id||p.cat))} · ${fa(p.price)} تومان${p.discount?` · ${fa(p.discount)}٪ تخفیف`:''}${p.best?' · پرفروش':''}${p.is_new?' · جدید':''}${p.active?'':' · مخفی'}</div></div>
+        <div class="inf"><b>${esc(p.name)}</b><div class="mu">${esc(cn(p.category_id||p.cat))} · ${fa(p.price)} تومان · موجودی: <b class="${p.stock>0?'':'err'}">${fa(p.stock)}</b>${p.discount?` · ${fa(p.discount)}٪ تخفیف`:''}${p.best?' · پرفروش':''}${p.is_new?' · جدید':''}${p.active?'':' · مخفی'}</div></div>
         <button class="btn ghost" data-e="${esc(p.id)}">ویرایش</button>
         <button class="rm" data-d="${esc(p.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button>
       </div>`).join('')||'<p class="mu">هنوز محصولی در دیتابیس نیست.</p>'}</div>`;
@@ -620,7 +620,7 @@ async function adminProducts(){
   const form=async p=>{
     const isNew=!p;
     const bo=isNew?null:await rest('product_bot?product_id=eq.'+encodeURIComponent(p.id)).catch(()=>null),bd=(bo&&bo.ok&&bo.d[0])||{};
-    p=p||{id:'p'+Date.now().toString(36),name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
+    p=p||{id:'p'+Date.now().toString(36),name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:'',stock:10};
     const f=$('#apForm');
     let existingFVals=[];
     if(!isNew && p.id){
@@ -647,6 +647,7 @@ async function adminProducts(){
     <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
     <label>گروه<select id="f_cat"><option value="">— انتخاب کنید —</option>${mainCats.map(c=>`<option value="${c.id}" ${String(c.id)===String(currentCatId)?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
     <label>قیمت (تومان)<input id="f_price" inputmode="numeric" value="${esc(p.price)}"></label>
+    <label>موجودی در انبار<input id="f_stock" inputmode="numeric" value="${esc(p.stock)}"></label>
     <label>درصد تخفیف (۰ تا ۹۰)<input id="f_disc" inputmode="numeric" value="${esc(p.discount||'')}"></label>
     <label>لینک‌های مقایسه<textarea id="f_links" rows="4" placeholder="https://...">${esc((bd.links||[]).join('\n'))}</textarea></label>
     <label>کف قیمت (تومان)<input id="f_floor" inputmode="numeric" value="${esc(bd.min_price||'')}"></label>
@@ -667,6 +668,8 @@ async function adminProducts(){
     
     $('#f_save').onclick=async()=>{
       const m=$('#f_msg'),name=$('#f_name').value.trim(),price=parseInt(($('#f_price').value||'').replace(/[^0-9]/g,''),10),chosenCat=$('#f_cat').value;
+      const stock=parseInt(($('#f_stock').value||'').replace(/[^0-9]/g,''),10)||0;
+      
       if(!name)return m.textContent='نام محصول را بنویسید.';
       if(!(price>=0))return m.textContent='قیمت را با عدد بنویسید.';
       if(!chosenCat)return m.textContent='گروه محصول را انتخاب کنید.';
@@ -679,7 +682,7 @@ async function adminProducts(){
       const specs=[...f.querySelectorAll('.srow')].map(d=>[d.querySelector('.sl').value.trim(),d.querySelector('.sv').value.trim()]).filter(x=>x[0]&&x[1]);
       const catObj=dbCats.find(c=>String(c.id)===String(chosenCat));
       const catSlug=catObj?((catObj.slug && /^[a-z0-9-]+$/i.test(catObj.slug)) ? catObj.slug : String(catObj.id)):chosenCat;
-      const row={id:p.id,cat:catSlug,category_id:catObj?Number(catObj.id):null,name,price,discount:Math.min(90,Math.max(0,parseInt(($('#f_disc').value||'').replace(/[^0-9]/g,''),10)||0)),description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
+      const row={id:p.id,cat:catSlug,category_id:catObj?Number(catObj.id):null,name,price,stock,discount:Math.min(90,Math.max(0,parseInt(($('#f_disc').value||'').replace(/[^0-9]/g,''),10)||0)),description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
       const r=await rest('products?on_conflict=id','POST',row,'resolution=merge-duplicates,return=minimal').catch(()=>null);
       if(!r||!r.ok)return m.textContent='ذخیره نشد.';
       const fvals=[];
@@ -694,7 +697,6 @@ async function adminProducts(){
   };
   load()
 }
-
 // ==================== NEW FILTER MODAL ====================
 const closeBtn = document.getElementById('closeFilters');
 if(closeBtn) {
