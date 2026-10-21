@@ -15,36 +15,22 @@ async function refreshSession(){const s=session();if(!s||s.exp>Date.now()+60000)
 const fa=n=>Number(n||0).toLocaleString('fa-IR');
 
 // ==================== CATEGORIES (DYNAMIC) ====================
-let cats=[];      // گروه‌های اصلی
-let subs={};      // زیرگروه‌ها: {catId: [نام زیرگروه، ...]}
-
-// آیکون‌های پیش‌فرض بر اساس اسم گروه
+let cats=[]; let subs={};
 const catIconsMap={mon:'ti-device-desktop',hard:'ti-server',cpu:'ti-cpu',gpu:'ti-chip',mb:'ti-cpu-2',ram:'ti-database',ssd:'ti-server',psu:'ti-bolt',case:'ti-box',cool:'ti-snowflake',laptop:'ti-device-laptop',ps:'ti-brand-playstation',mouse:'ti-mouse',kb:'ti-keyboard',head:'ti-headphones',مانیتور:'ti-device-desktop',رم:'ti-database',هارد:'ti-server',پردازنده:'ti-cpu','کارت گرافیک':'ti-chip',مادربرد:'ti-cpu-2','حافظه ذخیره‌سازی':'ti-server',پاور:'ti-bolt','قاب کیس':'ti-box','خنک‌کننده':'ti-snowflake','لپ‌تاپ':'ti-device-laptop','کنسول بازی':'ti-brand-playstation',موس:'ti-mouse',کیبورد:'ti-keyboard',هدست:'ti-headphones'};
 const catColors=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#8ea2ff','#b9a4ff'];
-
 async function loadCatsFromDB(){
   try{
     const r=await fetch(SB+'/rest/v1/categories?select=*&order=created_at.asc',{headers:{apikey:KEY}});
     if(!r.ok){cats=[];subs={};return}
     const dbCats=await r.json();
     if(!Array.isArray(dbCats)||!dbCats.length){cats=[];subs={};return}
-    const mainCats=dbCats.filter(c=>!c.parent_id);
-    const subCats=dbCats.filter(c=>c.parent_id);
+    const mainCats=dbCats.filter(c=>!c.parent_id), subCats=dbCats.filter(c=>c.parent_id);
     cats=mainCats.map((c,i)=>{
       const slug=(c.slug&&/^[a-z0-9-]+$/i.test(c.slug))?c.slug:null;
-      return {
-        id: slug || String(c.id),
-        dbId: c.id,
-        n: c.name,
-        i: catIconsMap[c.slug] || catIconsMap[c.name] || 'ti-box',
-        col: catColors[i % catColors.length]
-      };
+      return { id: slug || String(c.id), dbId: c.id, n: c.name, i: catIconsMap[c.slug] || catIconsMap[c.name] || 'ti-box', col: catColors[i % catColors.length] };
     });
     subs={};
-    cats.forEach(mc=>{
-      const mcSubs=subCats.filter(s=>String(s.parent_id)===String(mc.dbId));
-      subs[mc.id]=mcSubs.map(s=>s.name);
-    });
+    cats.forEach(mc=>{ subs[mc.id]=subCats.filter(s=>String(s.parent_id)===String(mc.dbId)).map(s=>s.name); });
   }catch(e){console.warn('loadCatsFromDB failed',e);cats=[];subs={}}
 }
 
@@ -64,6 +50,7 @@ function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id=
 const logo=()=>`<a class="logo" href="index.html"><span class="lg"><i class="ti ti-cpu"></i></span><span class="ln">پارت‌زون</span></a>`;
 const qlink=(c,x)=>`index.html?cat=${encodeURIComponent(c.id)}${x?'&q='+encodeURIComponent(x):''}#shop`;
 const priceTxt=p=>(p.old?`<s class="old">${fa(p.old)}</s> `:'')+fa(p.price)+' تومان';
+
 // ==================== HEADER / FOOTER ====================
 function header(){
   const me=session();
@@ -92,7 +79,6 @@ function header(){
   ['#out','#out2'].forEach(k=>{const o=$(k);if(o)o.onclick=logout});
   const hs=$('#hs');if(hs)hs.onkeydown=e=>{if(e.key=='Enter')location='index.html?q='+encodeURIComponent(hs.value.trim())+'#shop'};
 }
-
 function footer(){
   document.querySelectorAll('footer').forEach(x=>x.remove());
   document.body.insertAdjacentHTML('beforeend',`<footer class="ft"><div class="wrap fg"><div>${logo()}<p>فروشگاه آنلاین قطعات و لوازم جانبی کامپیوتر.</p></div>
@@ -100,7 +86,6 @@ function footer(){
   <div><h4>حساب کاربری</h4><a href="login.html">ورود</a><a href="register.html">ثبت‌نام</a><a href="cart.html">سبد خرید</a><a href="orders.html">سفارش‌های من</a><a href="games.html">معرفی بازی‌ها</a></div></div>
   <div class="cp">© پارت‌زون، تمام حقوق محفوظ است.</div></footer>`);
 }
-
 function tilt(el,deg,lift){if(matchMedia('(hover:none)').matches)return;
   el.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform=`rotateY(${-x*deg}deg) rotateX(${y*deg}deg) translateY(${lift}px) scale(1.04)`});
   el.addEventListener('mouseleave',()=>el.style.transform='');
@@ -114,58 +99,37 @@ let q=(P.get('q')||'').trim();
 async function shop(){
   const box=$('#shop');if(!box)return;
 
-  // خوندن گروه از URL
   const urlCat=new URLSearchParams(location.search).get('cat');
   if(urlCat && cats.some(c=>c.id==urlCat)){
-    cat=urlCat;
-    sessionStorage.setItem('lastCat',cat);
+    cat=urlCat; sessionStorage.setItem('lastCat',cat);
   } else if(cats.some(c=>c.id==cat)){
-    // cat قبلی حفظ میشه
-  } else {
-    cat='all';
-    sessionStorage.removeItem('lastCat');
-  }
+  } else { cat='all'; sessionStorage.removeItem('lastCat'); }
   if(cat!='all' && !cats.some(c=>c.id==cat)) cat='all';
 
-  // فیلترهای فعال از URL
   const params=new URLSearchParams(location.search);
-  const activeFilters={};
-  cats.forEach(c=>{ if(c.dbId) activeFilters[String(c.dbId)]=params.get('f'+c.dbId)||''; });
-
-  // چیپ‌های گروه
   $('#chips').innerHTML=`<button class="chip ${cat=='all'?'on':''}" data-c="all">همه</button>`+cats.map(c=>`<button class="chip ${cat==c.id?'on':''}" data-c="${c.id}">${esc(c.n)}</button>`).join('');
 
-  // مدیریت دکمه فیلترها
-const filterToggle = document.getElementById('openFilters');
-if (cat !== 'all') {
-    filterToggle.style.display = 'inline-flex';
-    filterToggle.onclick = () => {
-        document.getElementById('filterModal').style.display = 'block';
-        document.body.style.overflow = 'hidden';
-        loadModalFilters(cat); // فراخوانی تابع جدید
-    };
-} else {
-    filterToggle.style.display = 'none';
-}
+  const filterToggle = document.getElementById('openFilters');
+  if (filterToggle) {
+      if (cat !== 'all') {
+          filterToggle.style.display = 'inline-flex';
+          filterToggle.onclick = () => {
+              document.getElementById('filterModal').style.display = 'block';
+              document.body.style.overflow = 'hidden';
+              loadModalFilters(cat); 
+          };
+      } else { filterToggle.style.display = 'none'; }
+  }
 
-  // ==== اعمال فیلترهای انتخاب‌شده ====
-  const selectedOpts=[];
-  new URLSearchParams(location.search).forEach((v,k)=>{
-    if(k.startsWith('fo')) selectedOpts.push(v);
-  });
-
+  const selectedOpts=[]; new URLSearchParams(location.search).forEach((v,k)=>{ if(k.startsWith('fo')) selectedOpts.push(v); });
   let filteredProductIds=null;
   if(selectedOpts.length){
     try{
       const fvr=await fetch(SB+'/rest/v1/product_filter_values?select=product_id&option_id=in.('+selectedOpts.join(',')+')',{headers:{apikey:KEY}});
-      if(fvr.ok){
-        const fv=await fvr.json();
-        filteredProductIds=new Set(fv.map(x=>String(x.product_id)));
-      }
-    }catch(e){console.warn('filter products failed',e)}
+      if(fvr.ok){ const fv=await fvr.json(); filteredProductIds=new Set(fv.map(x=>String(x.product_id))); }
+    }catch(e){}
   }
 
-  // محصولات
   const visibleCats=cats.filter(c=>cat=='all'||cat==c.id);
   if(!visibleCats.length){box.innerHTML='<p>محصولی پیدا نشد.</p>';return}
 
@@ -174,9 +138,11 @@ if (cat !== 'all') {
       const pCat = p.category_id ? String(p.category_id) : String(p.cat);
       return pCat == String(c.dbId) && (q?p.name.includes(q):true);
     });
-    if(filteredProductIds && filteredProductIds.size>0){
-      l=l.filter(p=>filteredProductIds.has(String(p.id)));
+    
+    if(selectedOpts.length > 0){
+      l=l.filter(p=>filteredProductIds && filteredProductIds.has(String(p.id)));
     }
+    
     if(!l.length)return'';
     return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>`<div class="card" style="--c:${c.col}"><a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a><button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button><div class="price">${priceTxt(p)}</div><button class="btn add" data-id="${p.id}">افزودن به سبد</button></div>`).join('')+'</div>';
   }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
@@ -191,7 +157,6 @@ if (cat !== 'all') {
     location.search=p.toString();
   });
 }
-  
 // ==================== PRODUCT PAGE ====================
 function productPage(){
   const box=$('#prodBox');if(!box)return;
@@ -246,21 +211,12 @@ function cartPage(){
     m.textContent='در حال ثبت سفارش...';await refreshSession();
     const items=ids.map(id=>{const p=products.find(x=>x.id==id);return{id,name:p.name,price:p.price,qty:c[id]}});
     const s=session();
-    const orderData={
-      items,
-      total,
-      customer:s.email,
-      user_id:null,
-      full_name:fullName,
-      phone,
-      address,
-      postal_code:postal,
-      status:'pending'
-    };
+    const orderData={items,total,customer:s.email,user_id:null,full_name:fullName,phone,address,postal_code:postal,status:'pending'};
     const r=await rest('orders','POST',orderData).catch(()=>null);
     if(!r||!r.ok){m.textContent='خطا: '+JSON.stringify(r&&r.d||'no response').substring(0,300);return}
     saveCart({});box.innerHTML=`<div class="empty"><i class="ti ti-circle-check"></i><h2>سفارش شما ثبت شد</h2><p>شماره سفارش: ${fa(r.d[0].id)}<br>پرداخت آنلاین در مرحله‌ی بعد اضافه می‌شود.</p><a class="btn" href="orders.html">سفارش‌های من</a></div>`};
 }
+
 // ==================== ORDERS PAGE ====================
 async function ordersPage(){
   const box=$('#ordBox');if(!box)return;
@@ -325,25 +281,12 @@ async function adminPage(){
     toast(u&&u.ok?'وضعیت ذخیره شد':'ذخیره نشد');});
 }
 
-// ==================== NORM PRODUCT (بدون فیلتر cat) ====================
+// ==================== NORM PRODUCT ====================
 const normP=d=>{
   if(!d||!/^[\w-]+$/.test(d.id))return null;
   const b=+d.price||0,disc=Math.min(90,Math.max(0,parseInt(d.discount)||0));
   const finalPrice=disc?Math.max(0,Math.round(b*(100-disc)/100/1000)*1000):b;
-  return {
-    id:d.id,
-    cat: d.cat || (d.category_id?String(d.category_id):''),
-    category_id: d.category_id||null,
-    name:String(d.name||''),
-    price: finalPrice,
-    old: disc?b:0,
-    disc: disc,
-    specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],
-    desc:d.description||'',
-    best:d.best?1:0,
-    new:d.is_new?1:0,
-    img:d.image||''
-  };
+  return {id:d.id,cat: d.cat || (d.category_id?String(d.category_id):''),category_id: d.category_id||null,name:String(d.name||''),price: finalPrice,old: disc?b:0,disc: disc,specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''};
 };
 
 async function loadProducts(){
@@ -357,11 +300,10 @@ async function loadProducts(){
   return (await fetch('products.json')).json();
 }
 
-// ==================== BEST RAIL ====================
+// ==================== BEST RAIL / TILES ====================
 function bestRail(){const b=$('#best');if(!b)return;
   b.innerHTML=products.filter(p=>p.best).map((p,i)=>{const c=cats.find(x=>x.id==p.cat)||{col:'#a78bfa'};return`<a class="bc" href="product.html?id=${p.id}" style="--c:${c.col}"><span class="rk">${fa(i+1)}</span><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3><div class="price">${priceTxt(p)}</div></a>`}).join('')}
 
-// ==================== TILES ====================
 async function tiles(){const t=$('#tiles');if(!t)return;
   const cf=await siteCfg(),L=[...CAT_IMAGES,...(Array.isArray(cf.catImages)?cf.catImages:[])];
   t.innerHTML=cats.map(c=>`<a href="${qlink(c)}" style="--c:${c.col}"><span class="cc">${L.includes(c.id)?`<img src="images/cat-${c.id}.jpg" data-id="cat-${c.id}" data-ic="${c.i}" alt="" onerror="imgFail(this)">`:`<i class="ti ${c.i}"></i>`}</span>${esc(c.n)}</a>`).join('');
@@ -378,6 +320,7 @@ async function gamesPage(){
     $('#gChips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{f=b.dataset.f;draw()})};
   draw();
 }
+
 // ==================== COMPARE ====================
 const cmp=()=>{const a=get('cmp','[]');return Array.isArray(a)?a:[]};
 const saveCmp=a=>{localStorage.setItem('cmp',JSON.stringify(a));syncCmp();cmpBar()};
@@ -429,27 +372,16 @@ function lightbox(el){const im=el.querySelector('img');if(!im)return;
 // ==================== SLIDER ====================
 async function slider(){const r=$('#sl');if(!r)return;const cf=await siteCfg();
   const DEF=[
-   {t:'فروش ویژه قطعات گیمینگ',h:'قدرت سیستمت رو<br><span class="hl">خودت بساز</span>',p:'از کارت گرافیک تا قاب کیس، همه‌چیز در یک فروشگاه.',b:'مشاهده محصولات',u:'#shop',i:['mouse','chip','keyboard'],tg:['۲۶۰۰۰ DPI','RTX 4070'],g:'linear-gradient(135deg,#2d1b7a,#4a2bb8 55%,#6d3fe0)'},
-   {t:'دنیای PlayStation',h:'کنسول و لوازم<br><span class="hl">بازی روی تلویزیون</span>',p:'کنسول، دسته و لوازم جانبی برای تجربه‌ی بازی راحت.',b:'مشاهده کنسول‌ها',u:'#shop',i:['headphones','brand-playstation','device-gamepad-2'],tg:['PlayStation 5','DualSense'],g:'linear-gradient(135deg,#1c1056,#3a2aa8 55%,#5b3fd1)'},
-   {t:'لپ‌تاپ',h:'برای کار، تحصیل<br><span class="hl">و بازی</span>',p:'از لپ‌تاپ اداری تا مدل‌های گیمینگ.',b:'مشاهده لپ‌تاپ‌ها',u:'#shop',i:['keyboard','device-laptop','mouse'],tg:['RTX 4060','۱۶ گیگابایت'],g:'linear-gradient(135deg,#251a6e,#4328a6 55%,#7a4be8)'},
-   {t:'راهنمای بازی‌ها',h:'ببین سیستمت چه<br><span class="hl">بازی‌هایی می‌کشد</span>',p:'بازی‌های محبوب را بشناسید و سخت‌افزار مناسب را ببینید.',b:'معرفی بازی‌ها',u:'games.html',i:['device-gamepad-2','chip','device-desktop'],tg:['PC','PlayStation'],g:'linear-gradient(135deg,#2a1a78,#5530b8 55%,#8250f0)'}];
-  const S=Array.isArray(cf.slides)&&cf.slides.length?cf.slides.map(x=>({t:'',h:'',p:'',b:'مشاهده',u:'#shop',i:['mouse','chip','keyboard'],tg:['',''],g:DEF[0].g,...x})):DEF;
+   {t:'فروش ویژه قطعات گیمینگ',h:'قدرت سیستمت رو<br><span class="hl">خودت بساز</span>',p:'از کارت گرافیک تا قاب کیس، همه‌چیز در یک فروشگاه.',b:'مشاهده محصولات',u:'#shop',g:'linear-gradient(135deg,#0d0817 0%,#1c1030 50%,#08070d 100%)'}];
+  const S=Array.isArray(cf.slides)&&cf.slides.length?cf.slides.map(x=>({t:'',h:'',p:'',b:'مشاهده',u:'#shop',g:DEF[0].g,...x})):DEF;
   const bgOf=x=>x.bgimg?`linear-gradient(90deg,rgba(18,12,34,.88),rgba(18,12,34,.3)),url('${esc(x.bgimg)}') center/cover`:x.g,hOf=x=>x.hl?esc(x.h)+'<br><span class="hl">'+esc(x.hl)+'</span>':x.h;
-  r.innerHTML=`<div class="slides">${S.map((x,i)=>`<div class="hero slide ${i?'':'on'}" style="background:${bgOf(x)}" aria-hidden="${i?'true':'false'}"><div><small>${esc(x.t)}</small><h1>${hOf(x)}</h1><p>${esc(x.p)}</p><div class="row"><a class="btn" href="${esc(x.u)}">${esc(x.b)}</a>${i?'':'<a class="btn ghost" href="register.html">ساخت حساب</a>'}</div></div><div class="stage">${x.img?`<img class="simg" src="${esc(x.img)}" alt="" loading="lazy">`:x.bgimg?'':`<div class="fan">${x.tg[0]?`<span class="ftag" style="left:10px;top:0">${esc(x.tg[0])}</span>`:''}${x.tg[1]?`<span class="ftag" style="left:190px;bottom:-4px">${esc(x.tg[1])}</span>`:''}<div class="fc a"><i class="ti ti-${esc(x.i[0])}"></i></div><div class="fc c"><i class="ti ti-${esc(x.i[2])}"></i></div><div class="fc b"><i class="ti ti-${esc(x.i[1])}"></i></div></div>`}</div></div>`).join('')}</div>
+  r.innerHTML=`<div class="slides">${S.map((x,i)=>`<div class="hero slide ${i?'':'on'}" style="background:${bgOf(x)}" aria-hidden="${i?'true':'false'}"><div><small>${esc(x.t)}</small><h1>${hOf(x)}</h1><p>${esc(x.p)}</p><div class="row"><a class="btn" href="${esc(x.u)}">${esc(x.b)}</a>${i?'':'<a class="btn ghost" href="register.html">ساخت حساب</a>'}</div></div><div class="stage">${x.img?`<img class="simg" src="${esc(x.img)}" alt="" loading="lazy">`:x.bgimg?'':''}</div></div>`).join('')}</div>
   <button class="sl-a r" aria-label="قبلی"><i class="ti ti-chevron-right"></i></button><button class="sl-a l" aria-label="بعدی"><i class="ti ti-chevron-left"></i></button>
   <div class="dots">${S.map((_,i)=>`<button aria-label="اسلاید ${fa(i+1)}" class="${i?'':'on'}"></button>`).join('')}</div>`;
   let n=0,t;const sl=r.querySelectorAll('.slide'),dt=r.querySelectorAll('.dots button');
   const go=i=>{n=(i+S.length)%S.length;sl.forEach((x,k)=>{x.classList.toggle('on',k==n);x.setAttribute('aria-hidden',k!=n)});dt.forEach((x,k)=>x.classList.toggle('on',k==n))};
   const stop=()=>clearInterval(t),play=()=>{stop();if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;t=setInterval(()=>go(n+1),5500)};
-  // اگر فقط یک اسلاید وجود داشت، کنترل‌ها را مخفی کن
-if(S.length === 1){
-  const lBtn = r.querySelector('.sl-a.l');
-  const rBtn = r.querySelector('.sl-a.r');
-  const dots = r.querySelector('.dots');
-  if(lBtn) lBtn.style.display = 'none';
-  if(rBtn) rBtn.style.display = 'none';
-  if(dots) dots.style.display = 'none';
-}
+  dt.forEach((x,k)=>x.onclick=()=>{go(k);play()});
   r.querySelector('.sl-a.l').onclick=()=>{go(n+1);play()};r.querySelector('.sl-a.r').onclick=()=>{go(n-1);play()};
   r.addEventListener('mouseenter',stop);r.addEventListener('mouseleave',play);
   let x0=null;r.addEventListener('pointerdown',e=>{x0=e.clientX;stop()});
@@ -463,11 +395,14 @@ function auth(){
   if(r)r.onsubmit=async e=>{e.preventDefault();const f=new FormData(r),b=r.querySelector('button');
     if(f.get('pass').length<6)return m('رمز عبور باید حداقل ۶ کاراکتر باشد.');
     b.disabled=true;m('در حال ساخت حساب...',1);
-    const x=await sbf('/auth/v1/signup',{email:f.get('email').trim().toLowerCase(),password:f.get('pass'),data:{name:f.get('name').trim()}}).catch(()=>null);
+    const email=f.get('email').trim().toLowerCase(),pass=f.get('pass'),name=f.get('name').trim();
+    const check=await sbf('/auth/v1/token?grant_type=password',{email,password:pass}).catch(()=>null);
+    if(check && check.ok){b.disabled=false;return m('این ایمیل قبلاً ثبت شده است. وارد شوید.');}
+    const x=await sbf('/auth/v1/signup',{email,password:pass,data:{name}}).catch(()=>null);
     b.disabled=false;
     if(!x)return m('اتصال برقرار نشد.');
     if(!x.ok)return m(emsg(x.d));
-    if(x.d.access_token){save(x.d);location='index.html'}else m('حساب ساخته شد. ایمیل خود را تأیید کنید.',1)};
+    if(x.d.access_token){save(x.d);location='index.html'}else m('حساب ساخته شد. ایمیل خود را برای تأیید بررسی کنید.',1)};
   if(l){const tabs=document.querySelectorAll('.tab'),pick=t=>{mode=t.dataset.m;tabs.forEach(x=>x.classList.toggle('on',x==t));if($('#loginTitle'))$('#loginTitle').textContent=mode=='admin'?'ورود مدیر':'ورود به حساب';if($('#regLink'))$('#regLink').style.display=mode=='admin'?'none':'';if($('#err'))$('#err').textContent=''};
     tabs.forEach(t=>t.onclick=()=>pick(t));if(new URLSearchParams(location.search).get('m')=='admin'){const at=document.querySelector('.tab[data-m="admin"]');if(at)pick(at)}}
   if(l)l.onsubmit=async e=>{e.preventDefault();const f=new FormData(l),b=l.querySelector('button');
@@ -585,27 +520,26 @@ async function adminProducts(){
     p=p||{id:'p'+Date.now().toString(36),name:'',price:'',description:'',specs:[],best:false,is_new:false,active:true,image:''};
     const f=$('#apForm');
     let existingFVals=[];
-if(!isNew && p.id){
-  try{
-    const evr=await rest('product_filter_values?product_id=eq.'+encodeURIComponent(p.id));
-    if(evr&&evr.ok)existingFVals=evr.d||[];
-  }catch(e){existingFVals=[]}
-}
+    if(!isNew && p.id){
+      try{ const evr=await rest('product_filter_values?product_id=eq.'+encodeURIComponent(p.id)); if(evr&&evr.ok)existingFVals=evr.d||[]; }catch(e){existingFVals=[]}
+    }
     
     const mainCats=dbCats.filter(c=>!c.parent_id);
     const currentCatId=p.category_id||null;
     const getFiltersForCat=(cid)=>{const subs2=dbCats.filter(c=>String(c.parent_id)===String(cid)).map(c=>c.id);return dbFilters.filter(f2=>String(f2.category_id)===String(cid)||subs2.map(String).includes(String(f2.category_id)))};
+    
     const renderFilterOptions=(catId)=>{
-  const fl=getFiltersForCat(catId),wrap=$('#f_filters');
-  if(!wrap)return;
-  if(!fl.length){wrap.innerHTML='<p class="mu">برای این گروه فیلتری تعریف نشده.</p>';return}
-  wrap.innerHTML=fl.map(f2=>{
-    const opts=dbOptions.filter(o=>String(o.filter_id)===String(f2.id));
-    const existing=existingFVals.find(ev=>String(ev.filter_id)===String(f2.id));
-    const selVal=existing?String(existing.option_id):'';
-    return `<div style="margin:8px 0"><label>${esc(f2.name)}</label><select class="filter-select" data-fid="${f2.id}"><option value="">— انتخاب کنید —</option>${opts.map(o=>`<option value="${o.id}" ${selVal===String(o.id)?'selected':''}>${esc(o.value)}</option>`).join('')}</select></div>`;
-  }).join('');
-};
+      const fl=getFiltersForCat(catId),wrap=$('#f_filters');
+      if(!wrap)return;
+      if(!fl.length){wrap.innerHTML='<p class="mu">برای این گروه فیلتری تعریف نشده.</p>';return}
+      wrap.innerHTML=fl.map(f2=>{
+        const opts=dbOptions.filter(o=>String(o.filter_id)===String(f2.id));
+        const existing=existingFVals.find(ev=>String(ev.filter_id)===String(f2.id));
+        const selVal=existing?String(existing.option_id):'';
+        return `<div style="margin:8px 0"><label>${esc(f2.name)}</label><select class="filter-select" data-fid="${f2.id}"><option value="">— انتخاب کنید —</option>${opts.map(o=>`<option value="${o.id}" ${selVal===String(o.id)?'selected':''}>${esc(o.value)}</option>`).join('')}</select></div>`;
+      }).join('');
+    };
+    
     f.innerHTML=`<div class="apf"><h3>${isNew?'محصول جدید':'ویرایش محصول'}</h3>
     <label>نام محصول<input id="f_name" value="${esc(p.name)}"></label>
     <label>گروه<select id="f_cat"><option value="">— انتخاب کنید —</option>${mainCats.map(c=>`<option value="${c.id}" ${String(c.id)===String(currentCatId)?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
@@ -619,6 +553,7 @@ if(!isNew && p.id){
     <label>عکس محصول<input id="f_img" type="file" accept="image/*"></label><div id="f_prev">${p.image?`<img class="prev" src="${esc(p.image)}" alt="">`:''}</div>
     <label class="ck"><input type="checkbox" id="f_best" ${p.best?'checked':''}> پرفروش</label><label class="ck"><input type="checkbox" id="f_new" ${p.is_new?'checked':''}> جدید</label><label class="ck"><input type="checkbox" id="f_act" ${p.active?'checked':''}> نمایش در فروشگاه</label>
     <div class="err" id="f_msg"></div><div class="ap-bar"><button class="btn" id="f_save">ذخیره</button><button class="btn ghost" id="f_cancel">انصراف</button></div></div>`;
+    
     const row=(l,v)=>{const d=document.createElement('div');d.className='srow';d.innerHTML='<input placeholder="عنوان" class="sl"><input placeholder="مقدار" class="sv"><button class="rm" type="button"><i class="ti ti-x"></i></button>';d.querySelector('.sl').value=l||'';d.querySelector('.sv').value=v||'';d.querySelector('.rm').onclick=()=>d.remove();$('#f_specs').appendChild(d)};
     (p.specs||[]).forEach(x=>row(x[0],x[1]));if(!(p.specs||[]).length)row();
     $('#f_add').onclick=()=>row();
@@ -626,6 +561,7 @@ if(!isNew && p.id){
     $('#f_cancel').onclick=()=>f.innerHTML='';
     if(currentCatId)renderFilterOptions(currentCatId);
     $('#f_cat').onchange=()=>renderFilterOptions($('#f_cat').value);
+    
     $('#f_save').onclick=async()=>{
       const m=$('#f_msg'),name=$('#f_name').value.trim(),price=parseInt(($('#f_price').value||'').replace(/[^0-9]/g,''),10),chosenCat=$('#f_cat').value;
       if(!name)return m.textContent='نام محصول را بنویسید.';
@@ -649,8 +585,7 @@ if(!isNew && p.id){
       if(fvals.length){const fr=await rest('product_filter_values','POST',fvals,'return=minimal').catch(()=>null);if(!fr||!fr.ok)toast('فیلترها ذخیره نشد.')}
       const links=($('#f_links').value||'').split(/\s+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x)),fp=parseInt(($('#f_floor').value||'').replace(/[^0-9]/g,''),10)||null;
       if(links.length||fp||bd.product_id){await rest('product_bot?on_conflict=product_id','POST',{product_id:p.id,links,min_price:fp},'resolution=merge-duplicates,return=minimal').catch(()=>null)}
-      toast('ذخیره شد');load();
-    existingFVals=fvals.slice();
+      toast('ذخیره شد');existingFVals=fvals.slice();load();
     };
     f.scrollIntoView({behavior:'smooth',block:'start'});
   };
@@ -658,76 +593,63 @@ if(!isNew && p.id){
 }
 
 // ==================== NEW FILTER MODAL ====================
-document.getElementById('closeFilters').onclick = () => {
-    document.getElementById('filterModal').style.display = 'none';
-    document.body.style.overflow = '';
-};
-
-document.getElementById('clearFilters').onclick = () => {
-    const url = new URL(location.href);
-    const keysToRemove = [];
-    url.searchParams.forEach((v, k) => { if(k.startsWith('fo')) keysToRemove.push(k); });
-    keysToRemove.forEach(k => url.searchParams.delete(k));
-    location.href = url.toString();
-};
-
-document.getElementById('applyFilters').onclick = () => {
-    const url = new URL(location.href);
-    // پاک کردن فیلترهای قبلی در URL
-    const keysToRemove = [];
-    url.searchParams.forEach((v, k) => { if(k.startsWith('fo')) keysToRemove.push(k); });
-    keysToRemove.forEach(k => url.searchParams.delete(k));
-    
-    // اضافه کردن فیلترهای انتخاب شده جدید
-    document.querySelectorAll('#filterContent .filter-opt-btn.on').forEach(btn => {
-        url.searchParams.set('fo' + btn.dataset.fid, btn.dataset.val);
-    });
-    location.href = url.toString();
-};
+const closeBtn = document.getElementById('closeFilters');
+if(closeBtn) {
+    closeBtn.onclick = () => {
+        document.getElementById('filterModal').style.display = 'none';
+        document.body.style.overflow = '';
+    };
+}
+const clearBtn = document.getElementById('clearFilters');
+if(clearBtn) {
+    clearBtn.onclick = () => {
+        const url = new URL(location.href);
+        const keysToRemove = [];
+        url.searchParams.forEach((v, k) => { if(k.startsWith('fo')) keysToRemove.push(k); });
+        keysToRemove.forEach(k => url.searchParams.delete(k));
+        location.href = url.toString();
+    };
+}
+const applyBtn = document.getElementById('applyFilters');
+if(applyBtn) {
+    applyBtn.onclick = () => {
+        const url = new URL(location.href);
+        const keysToRemove = [];
+        url.searchParams.forEach((v, k) => { if(k.startsWith('fo')) keysToRemove.push(k); });
+        keysToRemove.forEach(k => url.searchParams.delete(k));
+        document.querySelectorAll('#filterContent .filter-opt-btn.on').forEach(btn => {
+            url.searchParams.set('fo' + btn.dataset.fid, btn.dataset.val);
+        });
+        location.href = url.toString();
+    };
+}
 
 async function loadModalFilters(catId) {
     const content = document.getElementById('filterContent');
+    if(!content) return;
     content.innerHTML = '<p style="padding:20px;text-align:center;color:#a78bfa">در حال بارگذاری...</p>';
     const activeCat = cats.find(c => c.id === catId);
     if (!activeCat || !activeCat.dbId) return;
-
     try {
         const [fr, or] = await Promise.all([
             fetch(SB+'/rest/v1/filters?select=*&category_id=eq.'+activeCat.dbId+'&order=created_at.asc',{headers:{apikey:KEY}}),
             fetch(SB+'/rest/v1/filter_options?select=*&order=created_at.asc',{headers:{apikey:KEY}})
         ]);
         if (!fr.ok || !or.ok) throw new Error('Fetch failed');
-        const fList = await fr.json();
-        const oList = await or.json();
-        
-        if (!fList.length) {
-            content.innerHTML = '<p style="padding:20px;text-align:center;color:#a78bfa">فیلتری برای این گروه تعریف نشده است.</p>';
-            return;
-        }
-
-        const urlParams = new URLSearchParams(location.search);
-        let html = '';
-        
+        const fList = await fr.json(); const oList = await or.json();
+        if (!fList.length) { content.innerHTML = '<p style="padding:20px;text-align:center;color:#a78bfa">فیلتری برای این گروه تعریف نشده است.</p>'; return; }
+        const urlParams = new URLSearchParams(location.search); let html = '';
         fList.forEach(f => {
             const opts = oList.filter(o => String(o.filter_id) === String(f.id));
             const currentSelected = urlParams.get('fo' + f.id);
-            
-            html += `<div class="filter-row">`;
-            html += `<div class="filter-header" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open')">`;
-            html += `<span>${esc(f.name)}</span><i class="ti ti-chevron-down"></i>`;
-            html += `</div>`;
-            html += `<div class="filter-options">`;
-            opts.forEach(o => {
-                const isOn = String(currentSelected) === String(o.id);
-                html += `<button class="filter-opt-btn ${isOn?'on':''}" data-fid="${f.id}" data-val="${o.id}" onclick="this.classList.toggle('on')">${esc(o.value)}</button>`;
-            });
+            html += `<div class="filter-row"><div class="filter-header" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open')"><span>${esc(f.name)}</span><i class="ti ti-chevron-down"></i></div><div class="filter-options">`;
+            opts.forEach(o => { const isOn = String(currentSelected) === String(o.id); html += `<button class="filter-opt-btn ${isOn?'on':''}" data-fid="${f.id}" data-val="${o.id}" onclick="this.classList.toggle('on')">${esc(o.value)}</button>`; });
             html += `</div></div>`;
         });
         content.innerHTML = html;
-    } catch(e) {
-        content.innerHTML = '<p style="padding:20px;text-align:center;color:#e5384f">خطا در بارگذاری فیلترها.</p>';
-    }
+    } catch(e) { content.innerHTML = '<p style="padding:20px;text-align:center;color:#e5384f">خطا در بارگذاری فیلترها.</p>'; }
 }
+
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
