@@ -457,7 +457,15 @@ async function slider(){const r=$('#sl');if(!r)return;const cf=await siteCfg();
   let n=0,t;const sl=r.querySelectorAll('.slide'),dt=r.querySelectorAll('.dots button');
   const go=i=>{n=(i+S.length)%S.length;sl.forEach((x,k)=>{x.classList.toggle('on',k==n);x.setAttribute('aria-hidden',k!=n)});dt.forEach((x,k)=>x.classList.toggle('on',k==n))};
   const stop=()=>clearInterval(t),play=()=>{stop();if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;t=setInterval(()=>go(n+1),5500)};
-  dt.forEach((x,k)=>x.onclick=()=>{go(k);play()});
+  // اگر فقط یک اسلاید وجود داشت، کنترل‌ها را مخفی کن
+if(S.length === 1){
+  const lBtn = r.querySelector('.sl-a.l');
+  const rBtn = r.querySelector('.sl-a.r');
+  const dots = r.querySelector('.dots');
+  if(lBtn) lBtn.style.display = 'none';
+  if(rBtn) rBtn.style.display = 'none';
+  if(dots) dots.style.display = 'none';
+}
   r.querySelector('.sl-a.l').onclick=()=>{go(n+1);play()};r.querySelector('.sl-a.r').onclick=()=>{go(n-1);play()};
   r.addEventListener('mouseenter',stop);r.addEventListener('mouseleave',play);
   let x0=null;r.addEventListener('pointerdown',e=>{x0=e.clientX;stop()});
