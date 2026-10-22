@@ -1044,6 +1044,22 @@ async function adminCoupons(){
   };
   load();
 }
+// ==================== SKELETON UI ====================
+function getSkeletonHTML(count = 4) {
+  let html = '<div class="grid">';
+  for(let i=0; i<count; i++) {
+    html += `
+      <div class="skeleton-card">
+        <div class="skeleton-pic"></div>
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text short"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    `;
+  }
+  html += '</div>';
+  return html;
+}
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
