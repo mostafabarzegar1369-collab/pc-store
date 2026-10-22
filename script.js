@@ -1083,6 +1083,65 @@ function initBackToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 }
+// ==================== QUICK VIEW ====================
+function initQuickView() {
+  // ساخت پاپ‌آپ در پس‌زمینه
+  if(!document.getElementById('quickViewModal')){
+    const modal = document.createElement('div');
+    modal.id = 'quickViewModal';
+    modal.innerHTML = `
+      <div class="qv-content">
+        <button class="qv-close" onclick="document.getElementById('quickViewModal').classList.remove('show')"><i class="ti ti-x"></i></button>
+        <div class="qv-img-box"><img id="qvImg" src="" alt=""></div>
+        <div class="qv-info">
+          <h2 id="qvName"></h2>
+          <div class="qv-price" id="qvPrice"></div>
+          <p class="qv-desc" id="qvDesc"></p>
+          <button class="btn" id="qvAddBtn">افزودن به سبد</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    
+    // بستن با کلیک روی پس‌زمینه
+    modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('show'); };
+  }
+}
+
+// تابع باز کردن پاپ‌آپ
+function openQuickView(id) {
+  const p = products.find(x => x.id == id);
+  if(!p) return;
+  
+  const modal = document.getElementById('quickViewModal');
+  if(!modal) return;
+
+  document.getElementById('qvImg').src = p.img || 'images/' + p.id + '.jpg';
+  document.getElementById('qvName').textContent = p.name;
+  document.getElementById('qvPrice').innerHTML = priceTxt(p);
+  document.getElementById('qvDesc').textContent = p.desc || descs[p.cat] || 'توضیحات این محصول به‌زودی اضافه می‌شود.';
+  
+  const addBtn = document.getElementById('qvAddBtn');
+  if(p.stock <= 0) {
+    addBtn.textContent = 'ناموجود';
+    addBtn.style.background = '#555';
+    addBtn.disabled = true;
+    addBtn.onclick = null;
+  } else {
+    addBtn.textContent = 'افزودن به سبد';
+    addBtn.style.background = 'var(--p)';
+    addBtn.disabled = false;
+    addBtn.onclick = () => {
+      const c = cart();
+      c[p.id] = (c[p.id] || 0) + 1;
+      saveCart(c);
+      toast('به سبد خرید اضافه شد');
+      modal.classList.remove('show'); // بستن بعد از افزودن
+      shop(); // آپدیت دکمه‌های صفحه
+    };
+  }
+
+  modal.classList.add('show');
+}
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
