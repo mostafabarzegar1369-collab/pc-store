@@ -299,13 +299,31 @@ function cartPage(){
   const box=$('#cartBox');if(!box)return;
   const c=cart(),ids=Object.keys(c).filter(id=>products.some(p=>p.id==id)&&c[id]>0);
   if(!ids.length){box.innerHTML='<div class="empty"><i class="ti ti-shopping-cart-off"></i><h2>سبد خرید شما خالی است</h2><p>محصولی انتخاب کنید تا اینجا نمایش داده شود.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';return}
-  let total=0;
-  const itemsHTML=ids.map(id=>{const p=products.find(x=>x.id==id),n=c[id];total+=p.price*n;
+  
+  let baseTotal=0;
+  const itemsHTML=ids.map(id=>{const p=products.find(x=>x.id==id),n=c[id];baseTotal+=p.price*n;
     return`<div class="row"><div class="pic sm">${pic(p)}</div><div class="inf"><h3>${esc(p.name)}</h3><div class="price">${priceTxt(p)}</div></div>
     <div class="qty"><button data-a="+" data-id="${id}" aria-label="افزایش">+</button><b>${fa(n)}</b><button data-a="-" data-id="${id}" aria-label="کاهش">−</button></div>
     <div class="lt">${fa(p.price*n)}</div><button class="rm" data-a="x" data-id="${id}" aria-label="حذف"><i class="ti ti-trash"></i></button></div>`}).join('');
+    
   box.innerHTML=itemsHTML+
-   `<div class="sum"><span>جمع کل</span><b>${fa(total)} تومان</b></div>
+   `<div style="margin:20px 0;padding:16px;background:var(--card);border-radius:12px">
+     <h3 style="margin-bottom:12px">کد تخفیف</h3>
+     <div style="display:flex;gap:10px;">
+       <input id="couponCode" placeholder="کد تخفیف دارید؟" style="flex:1;padding:10px;border-radius:8px;border:1px solid #444;background:#1a1428;color:#fff;text-align:center;">
+       <button class="btn" id="applyCoupon" style="padding:0 20px;">اعمال</button>
+     </div>
+     <div id="couponMsg" style="margin-top:8px;font-size:13px;"></div>
+   </div>
+   <div class="sum" style="border-bottom:1px dashed #444;padding-bottom:10px;margin-bottom:10px;">
+     <span>جمع کل</span><b>${fa(baseTotal)} تومان</b>
+   </div>
+   <div class="sum" id="discountRow" style="display:none;color:#7be0a4;border-bottom:1px dashed #444;padding-bottom:10px;margin-bottom:10px;">
+     <span>تخفیف</span><b id="discountVal">0 تومان</b>
+   </div>
+   <div class="sum">
+     <span>مبلغ قابل پرداخت</span><b id="finalTotal">${fa(baseTotal)} تومان</b>
+   </div>
    <div style="margin:20px 0;padding:16px;background:var(--card);border-radius:12px">
      <h3 style="margin-bottom:12px">اطلاعات تحویل</h3>
      <label style="display:block;margin-bottom:8px">نام و نام خانوادگی<input id="o_name" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid #444;background:#1a1428;color:#fff" value="${session()?(session().name||''):''}"></label>
@@ -318,6 +336,47 @@ function cartPage(){
   box.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const k=b.dataset.id,a=b.dataset.a,d=cart();if(a=='+')d[k]++;else if(a=='-')d[k]--;else d[k]=0;if(d[k]<=0)delete d[k];saveCart(d);cartPage()});
   $('#clr').onclick=()=>{saveCart({});cartPage()};
   
+  let appliedDiscount = 0;
+  let finalTotalAmount = baseTotal;
+
+  $('#applyCoupon').onclick = async () => {
+    const code = $('#couponCode').value.trim().toUpperCase();
+    const msgBox = $('#couponMsg');
+    msgBox.style.color = '#e5384f';
+    if(!code) return;
+    
+    msgBox.textContent = 'در حال بررسی...';
+    const r = await rest('coupons?code=eq.'+code+'&is_active=eq.true').catch(()=>null);
+    
+    if(!r || !r.ok || !r.d.length) {
+        msgBox.textContent = 'کد تخفیف نامعتبر است.';
+        return;
+    }
+    
+    const cp = r.d[0];
+    if(cp.min_purchase > 0 && baseTotal < cp.min_purchase) {
+        msgBox.textContent = `حداقل مبلغ خرید برای این کد ${fa(cp.min_purchase)} تومان است.`;
+        return;
+    }
+    
+    if(cp.discount_type === 'percent') {
+        appliedDiscount = Math.round((baseTotal * cp.amount) / 100);
+    } else {
+        appliedDiscount = cp.amount;
+    }
+    
+    appliedDiscount = Math.min(appliedDiscount, baseTotal);
+    finalTotalAmount = baseTotal - appliedDiscount;
+    
+    msgBox.style.color = '#7be0a4';
+    msgBox.textContent = 'کد تخفیف با موفقیت اعمال شد.';
+    $('#discountRow').style.display = 'flex';
+    $('#discountVal').textContent = fa(appliedDiscount) + ' تومان';
+    $('#finalTotal').textContent = fa(finalTotalAmount) + ' تومان';
+    $('#applyCoupon').disabled = true;
+    $('#applyCoupon').textContent = 'اعمال شد';
+  };
+
   $('#pay').onclick=async()=>{const m=$('#msg');m.style.color='';
     if(!session()){m.innerHTML='برای ثبت سفارش ابتدا <a href="login.html" style="color:var(--pl)">وارد شوید</a>.';return}
     const fullName=$('#o_name').value.trim();
@@ -333,7 +392,8 @@ function cartPage(){
     m.textContent='در حال ثبت سفارش...';await refreshSession();
     const items=ids.map(id=>{const p=products.find(x=>x.id==id);return{id,name:p.name,price:p.price,qty:c[id]}});
     const s=session();
-    const orderData={items,total,customer:s.email,user_id:null,full_name:fullName,phone,address,postal_code:postal,status:'pending'};
+    // ثبت سفارش با مبلغ نهایی (بعد از تخفیف)
+    const orderData={items,total:finalTotalAmount,customer:s.email,user_id:null,full_name:fullName,phone,address,postal_code:postal,status:'pending'};
     const r=await rest('orders','POST',orderData).catch(()=>null);
     
     if(!r||!r.ok){m.textContent='خطا: '+JSON.stringify(r&&r.d||'no response').substring(0,300);return}
