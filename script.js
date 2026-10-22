@@ -5,26 +5,7 @@ const get=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||d)}catch(e){ret
 const SB='https://amhclwujstlipwjjahrs.supabase.co',KEY='sb_publishable_i7OICU1vj-NcXez0FU5c8Q_P2qJP4Yj';
 const sbf=(p,b,t)=>fetch(SB+p,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',...(t?{Authorization:'Bearer '+t}:{})},body:JSON.stringify(b||{})}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}));
 const rest=(p,m,b,pf)=>{const s=session(),h={apikey:KEY,'Content-Type':'application/json',Prefer:pf||'return=representation'};if(s)h.Authorization='Bearer '+s.at;return fetch(SB+'/rest/v1/'+p,{method:m||'GET',headers:h,body:b?JSON.stringify(b):undefined}).then(async r=>({ok:r.ok,d:await r.json().catch(()=>({}))}))};
-// تابع جدید برای کش کردن اطلاعات دیتابیس
-const fetchWithCache = async (url, options = {}, ttl = 300000) => {
-  const key = 'cache_' + url;
-  const cached = localStorage.getItem(key);
-  if (cached) {
-    try {
-      const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < ttl) {
-        return { ok: true, json: async () => data }; // شبیه‌سازی پاسخ fetch
-      }
-    } catch(e) {}
-  }
-  const r = await fetch(url, options);
-  if (r.ok) {
-    const data = await r.json();
-    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-    return { ok: true, json: async () => data };
-  }
-  return r;
-};
+const fetchWithCache = async (url, options = {}, ttl = 300000) => { const key = 'cache_' + url; const cached = localStorage.getItem(key); if (cached) { try { const { data, timestamp } = JSON.parse(cached); if (Date.now() - timestamp < ttl) return { ok: true, json: async () => data }; } catch(e) {} } const r = await fetch(url, options); if (r.ok) { const data = await r.json(); localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() })); return { ok: true, json: async () => data }; } return r; };
 const session=()=>get('sb','null');
 const save=d=>{const u=d.user||{};localStorage.setItem('sb',JSON.stringify({name:(u.user_metadata&&u.user_metadata.name)||u.email,email:u.email,at:d.access_token,rt:d.refresh_token,exp:Date.now()+(d.expires_in||3600)*1000,adm:!!(session()||{}).adm}))};
 const logout=()=>{const s=session();if(s)sbf('/auth/v1/logout',{},s.at).catch(()=>{});localStorage.removeItem('sb');location.reload()};
@@ -34,7 +15,7 @@ async function markAdmin(){const r=await rest('admins?select=user_id').catch(()=
 async function refreshSession(){const s=session();if(!s||s.exp>Date.now()+60000)return;const r=await sbf('/auth/v1/token?grant_type=refresh_token',{refresh_token:s.rt}).catch(()=>null);if(r&&r.ok)save(r.d);else if(r)localStorage.removeItem('sb')}
 const fa=n=>Number(n||0).toLocaleString('fa-IR');
 
-// ==================== CATEGORIES (DYNAMIC) ====================
+// ==================== CATEGORIES ====================
 let cats=[]; let subs={};
 const catIconsMap={mon:'ti-device-desktop',hard:'ti-server',cpu:'ti-cpu',gpu:'ti-chip',mb:'ti-cpu-2',ram:'ti-database',ssd:'ti-server',psu:'ti-bolt',case:'ti-box',cool:'ti-snowflake',laptop:'ti-device-laptop',ps:'ti-brand-playstation',mouse:'ti-mouse',kb:'ti-keyboard',head:'ti-headphones',مانیتور:'ti-device-desktop',رم:'ti-database',هارد:'ti-server',پردازنده:'ti-cpu','کارت گرافیک':'ti-chip',مادربرد:'ti-cpu-2','حافظه ذخیره‌سازی':'ti-server',پاور:'ti-bolt','قاب کیس':'ti-box','خنک‌کننده':'ti-snowflake','لپ‌تاپ':'ti-device-laptop','کنسول بازی':'ti-brand-playstation',موس:'ti-mouse',کیبورد:'ti-keyboard',هدست:'ti-headphones'};
 const catColors=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#8ea2ff','#b9a4ff'];
@@ -49,12 +30,11 @@ async function loadCatsFromDB(){
       const slug=(c.slug&&/^[a-z0-9-]+$/i.test(c.slug))?c.slug:null;
       return { id: slug || String(c.id), dbId: c.id, n: c.name, i: catIconsMap[c.slug] || catIconsMap[c.name] || 'ti-box', col: catColors[i % catColors.length] };
     });
-    subs={};
-    cats.forEach(mc=>{ subs[mc.id]=subCats.filter(s=>String(s.parent_id)===String(mc.dbId)).map(s=>s.name); });
+    subs={}; cats.forEach(mc=>{ subs[mc.id]=subCats.filter(s=>String(s.parent_id)===String(mc.dbId)).map(s=>s.name); });
   }catch(e){console.warn('loadCatsFromDB failed',e);cats=[];subs={}}
 }
 
-// ==================== STATIC CONFIG ====================
+// ==================== CONFIG & UTILS ====================
 const CAT_IMAGES=[];
 let _cfg;const siteCfg=()=>_cfg||(_cfg=fetch('site.json?t='+Date.now()).then(r=>r.ok?r.json():{}).catch(()=>({})));
 let products=[];
@@ -106,8 +86,9 @@ function header(){
     hs.onkeydown=e=>{if(e.key=='Enter')location='index.html?q='+encodeURIComponent(hs.value.trim())+'#shop'};
     hs.oninput=()=>{ q=hs.value.trim(); if(location.pathname.includes('index.html')||location.pathname==='/'||location.pathname==='/pc-store/'){ shop(); } };
   }
-  syncWishlist(); // آپدیت قلب‌ها بعد از لود هدر
+  syncWishlist();
 }
+
 function footer(){
   document.querySelectorAll('footer').forEach(x=>x.remove());
   document.body.insertAdjacentHTML('beforeend',`<footer class="ft"><div class="wrap fg"><div>${logo()}<p>فروشگاه آنلاین قطعات و لوازم جانبی کامپیوتر.</p></div>
@@ -115,15 +96,12 @@ function footer(){
   <div><h4>حساب کاربری</h4><a href="login.html">ورود</a><a href="register.html">ثبت‌نام</a><a href="cart.html">سبد خرید</a><a href="orders.html">سفارش‌های من</a><a href="games.html">معرفی بازی‌ها</a></div></div>
   <div class="cp">© پارت‌زون، تمام حقوق محفوظ است.</div></footer>`);
 }
+
 function tilt(el,deg,lift){if(matchMedia('(hover:none)').matches)return;
   el.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform=`rotateY(${-x*deg}deg) rotateX(${y*deg}deg) translateY(${lift}px) scale(1.04)`});
   el.addEventListener('mouseleave',()=>el.style.transform='');
 }
 
-// ==================== SHOP ====================
-const P=new URLSearchParams(location.search);
-let cat=sessionStorage.getItem('lastCat') || 'all';
-let q=(P.get('q')||'').trim();
 // ==================== WISHLIST ====================
 const wish=()=>{const w=get('wishlist','[]');return Array.isArray(w)?w:[]};
 const saveWish=w=>{localStorage.setItem('wishlist',JSON.stringify(w));syncWishlist()};
@@ -137,22 +115,29 @@ function toggleWish(id){
   const w=wish();
   if(w.includes(id)){saveWish(w.filter(x=>x!=id));toast('از علاقه‌مندی‌ها حذف شد');}
   else{saveWish([...w,id]);toast('به علاقه‌مندی‌ها اضافه شد');}
-  if(document.getElementById('wishBox')) wishlistPage(); // اگر توی صفحه علاقه‌مندی بود، رفرش کن
+  if(document.getElementById('wishBox')) wishlistPage();
 }
-// تابع ساخت دکمه خرید/تعداد
-function renderAddBtn(p) {
-    const c = cart();
-    const qty = c[p.id] || 0;
-    if (p.stock <= 0) return `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`;
-    if (qty > 0) {
-        return `<div class="inline-qty">
-            <button class="iq-btn minus" data-id="${p.id}">−</button>
-            <span>${qty}</span>
-            <button class="iq-btn plus" data-id="${p.id}">+</button>
-        </div>`;
-    }
-    return `<button class="btn add" data-id="${p.id}">افزودن به سبد</button>`;
+// ==================== SHOP ====================
+const P=new URLSearchParams(location.search);
+let cat=sessionStorage.getItem('lastCat') || 'all';
+let q=(P.get('q')||'').trim();
+
+// تابع کمکی برای ساخت دکمه سبد خرید
+function getCartBtn(p) {
+  const qty = cart()[p.id] || 0;
+  if (p.stock <= 0) {
+    return `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`;
+  }
+  if (qty > 0) {
+    return `<div class="inline-qty">
+      <button class="iq-btn minus" data-id="${p.id}">−</button>
+      <span>${qty}</span>
+      <button class="iq-btn plus" data-id="${p.id}">+</button>
+    </div>`;
+  }
+  return `<button class="btn add" data-id="${p.id}">افزودن به سبد</button>`;
 }
+
 async function shop(){
   const box=$('#shop');if(!box)return;
 
@@ -200,32 +185,18 @@ async function shop(){
     }
     
     if(!l.length)return'';
-    return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>{
-      
-      const cartData = cart();
-      const qty = cartData[p.id] || 0;
-      let addBtn = '';
-      
-      if(p.stock <= 0) {
-          addBtn = `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`;
-      } else if(qty > 0) {
-          addBtn = `<div class="inline-qty">
-              <button class="iq-btn minus" data-id="${p.id}">−</button>
-              <span>${qty}</span>
-              <button class="iq-btn plus" data-id="${p.id}">+</button>
-          </div>`;
-      } else {
-          addBtn = `<button class="btn add" data-id="${p.id}">افزودن به سبد</button>`;
-      }
-
-      return `<div class="card" style="--c:${c.col}; position:relative;">
-        <button class="wish-btn" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
-        <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
-        <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
-        <div class="price">${priceTxt(p)}</div>
-        ${addBtn}
-      </div>`;
-    }).join('')+'</div>';
+    
+    return `<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">` + 
+      l.map(p => `
+        <div class="card" style="--c:${c.col}; position:relative;">
+          <button class="wish-btn" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
+          <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
+          <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
+          <div class="price">${priceTxt(p)}</div>
+          ${getCartBtn(p)}
+        </div>
+      `).join('') + 
+    '</div>';
   }).join('')||'<p>محصولی با این فیلترها پیدا نشد.</p>';
 
   box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
@@ -243,6 +214,7 @@ async function shop(){
   });
   syncWishlist(); 
 }
+
 // ==================== PRODUCT PAGE ====================
 function productPage(){
   const box=$('#prodBox');if(!box)return;
@@ -252,20 +224,17 @@ function productPage(){
   const c=cats.find(x=>x.id==p.cat)||{id:'',n:'محصول',col:'#a78bfa'};
   const rel=products.filter(x=>x.cat==p.cat&&x.id!=p.id);
 
-  // تنظیم تگ‌های متا برای گوگل
+  // SEO
   let metaDesc = document.querySelector('meta[name="description"]');
   if(!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
   metaDesc.content = `خرید ${p.name} با بهترین قیمت ${priceTxt(p)} از فروشگاه پارت‌زون. ${p.desc || 'ارسال سریع و ضمانت اصالت کالا.'}`;
-
   let metaTitle = document.querySelector('meta[property="og:title"]');
   if(!metaTitle) { metaTitle = document.createElement('meta'); metaTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaTitle); }
   metaTitle.content = `${p.name} | پارت‌زون`;
-
   let metaImg = document.querySelector('meta[property="og:image"]');
   if(!metaImg) { metaImg = document.createElement('meta'); metaImg.setAttribute('property', 'og:image'); document.head.appendChild(metaImg); }
   metaImg.content = p.img || 'https://mostafabarzegar1369-collab.github.io/pc-store/images/slide1.webp';
 
-  // اضافه کردن Schema برای محصول
   let schema = document.getElementById('productSchema');
   if(schema) schema.remove();
   schema = document.createElement('script');
@@ -288,9 +257,16 @@ function productPage(){
       <div class="pic bigp" id="pimg" style="--c:${c.col}">${pic(p)}</div>
       <div class="pshadow"></div><small class="hint">لمس کنید یا نگه دارید تا بزرگ شود</small>
     </div>
-    <div class="pinfo"><h1>${esc(p.name)}</h1><div class="price lg">${priceTxt(p)}</div><p class="desc">${esc(p.desc||descs[p.cat]||'توضیحات این محصول به‌زودی اضافه می‌شود.')}</p>
-    <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
-    <div class="buy">${p.stock>0 ? `<button class="btn" id="addp">افزودن به سبد</button>` : `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`}</div>
+    <div class="pinfo">
+      <h1>${esc(p.name)}</h1>
+      <div class="price lg">${priceTxt(p)}</div>
+      <p class="desc">${esc(p.desc||descs[p.cat]||'توضیحات این محصول به‌زودی اضافه می‌شود.')}</p>
+      <table class="spec">${(p.specs||[]).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table>
+      <div class="buy">
+        ${p.stock>0 ? `<button class="btn" id="addp">افزودن به سبد</button>` : `<button class="btn" style="background:#555;cursor:not-allowed" disabled>ناموجود</button>`}
+        <button class="btn ghost" id="cmpp" data-id="${p.id}"><i class="ti ti-arrows-diff"></i> مقایسه</button>
+        <a class="btn ghost" href="cart.html">مشاهده سبد</a>
+      </div>
     </div>
   </div>
   ${rel.length?`<h2 class="g">محصولات مشابه</h2><div class="grid">${rel.map(r=>`
@@ -300,7 +276,6 @@ function productPage(){
       <div class="price">${priceTxt(r)}</div>
     </div>`).join('')}</div>`:''}
   
-  <!-- بخش نظرات و امتیازات -->
   <div id="reviewsSection" style="margin-top:40px;">
     <h2 class="g"><i class="ti ti-star"></i> نظرات و امتیازات</h2>
     <div id="reviewsList">در حال بارگذاری نظرات...</div>
@@ -308,15 +283,14 @@ function productPage(){
   </div>`;
 
   const addpBtn = $('#addp');
-  const addpBtn = $('#addp');
   if(addpBtn) addpBtn.onclick = () => {const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
+  
   if($('#pimg')) { tilt($('#pimg'),16,0); zoomable($('#pimg')); }
   if($('#cmpp')) $('#cmpp').onclick=()=>toggleCmp(p.id);
   syncCmp();
   box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
   syncWishlist(); 
   
-  // لود کردن نظرات
   loadReviews(p.id);
 }
 
@@ -340,34 +314,40 @@ function cartPage(){
      <label style="display:block;margin-bottom:8px">کد پستی<input id="o_postal" inputmode="numeric" style="width:100%;padding:10px;margin-top:4px;border-radius:8px;border:1px solid #444;background:#1a1428;color:#fff" placeholder="۱۰ رقم"></label>
    </div>
    <div class="sumb"><button class="btn ghost" id="clr">خالی کردن سبد</button><button class="btn" id="pay">ثبت سفارش</button></div><div class="err" id="msg"></div>`;
+  
   box.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const k=b.dataset.id,a=b.dataset.a,d=cart();if(a=='+')d[k]++;else if(a=='-')d[k]--;else d[k]=0;if(d[k]<=0)delete d[k];saveCart(d);cartPage()});
   $('#clr').onclick=()=>{saveCart({});cartPage()};
+  
   $('#pay').onclick=async()=>{const m=$('#msg');m.style.color='';
     if(!session()){m.innerHTML='برای ثبت سفارش ابتدا <a href="login.html" style="color:var(--pl)">وارد شوید</a>.';return}
     const fullName=$('#o_name').value.trim();
     const phone=$('#o_phone').value.trim();
     const address=$('#o_addr').value.trim();
     const postal=$('#o_postal').value.trim();
+    
     if(!fullName)return m.textContent='نام و نام خانوادگی را بنویسید.';
     if(!/^09\d{9}$/.test(phone))return m.textContent='شماره تماس باید با ۰۹ شروع و ۱۱ رقم باشد.';
     if(address.length<10)return m.textContent='آدرس کامل را بنویسید.';
     if(!/^\d{10}$/.test(postal))return m.textContent='کد پستی باید ۱۰ رقم باشد.';
+    
     m.textContent='در حال ثبت سفارش...';await refreshSession();
     const items=ids.map(id=>{const p=products.find(x=>x.id==id);return{id,name:p.name,price:p.price,qty:c[id]}});
     const s=session();
     const orderData={items,total,customer:s.email,user_id:null,full_name:fullName,phone,address,postal_code:postal,status:'pending'};
     const r=await rest('orders','POST',orderData).catch(()=>null);
+    
     if(!r||!r.ok){m.textContent='خطا: '+JSON.stringify(r&&r.d||'no response').substring(0,300);return}
-                              // کسر خودکار موجودی محصولات
-for(const item of items){
-  const prod = products.find(p=>p.id === item.id);
-  if(prod && prod.stock >= item.qty){
-    await rest('products?id=eq.'+item.id, 'PATCH', { stock: prod.stock - item.qty }, 'return=minimal').catch(()=>null);
-  }
-}
+    
+    // کسر خودکار موجودی
+    for(const item of items){
+      const prod = products.find(p=>p.id === item.id);
+      if(prod && prod.stock >= item.qty){
+        await rest('products?id=eq.'+item.id, 'PATCH', { stock: prod.stock - item.qty }, 'return=minimal').catch(()=>null);
+      }
+    }
+    
     saveCart({});box.innerHTML=`<div class="empty"><i class="ti ti-circle-check"></i><h2>سفارش شما ثبت شد</h2><p>شماره سفارش: ${fa(r.d[0].id)}<br>پرداخت آنلاین در مرحله‌ی بعد اضافه می‌شود.</p><a class="btn" href="orders.html">سفارش‌های من</a></div>`};
 }
-
 // ==================== ORDERS PAGE ====================
 async function ordersPage(){
   const box=$('#ordBox');if(!box)return;
@@ -437,7 +417,21 @@ const normP=d=>{
   if(!d||!/^[\w-]+$/.test(d.id))return null;
   const b=+d.price||0,disc=Math.min(90,Math.max(0,parseInt(d.discount)||0));
   const finalPrice=disc?Math.max(0,Math.round(b*(100-disc)/100/1000)*1000):b;
-  return {id:d.id, stock: d.stock || 0, cat: d.cat || (d.category_id?String(d.category_id):''),name:String(d.name||''),price: finalPrice,old: disc?b:0,disc: disc,specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],desc:d.description||'',best:d.best?1:0,new:d.is_new?1:0,img:d.image||''};
+  return {
+    id:d.id, 
+    stock: d.stock || 0, // <--- موجودی اضافه شد
+    cat: d.cat || (d.category_id?String(d.category_id):''),
+    category_id: d.category_id||null,
+    name:String(d.name||''),
+    price: finalPrice,
+    old: disc?b:0,
+    disc: disc,
+    specs:Array.isArray(d.specs)?d.specs.filter(x=>Array.isArray(x)):[],
+    desc:d.description||'',
+    best:d.best?1:0,
+    new:d.is_new?1:0,
+    img:d.image||''
+  };
 };
 
 async function loadProducts(){
@@ -533,7 +527,17 @@ async function slider(){const r=$('#sl');if(!r)return;const cf=await siteCfg();
   const go=i=>{n=(i+S.length)%S.length;sl.forEach((x,k)=>{x.classList.toggle('on',k==n);x.setAttribute('aria-hidden',k!=n)});dt.forEach((x,k)=>x.classList.toggle('on',k==n))};
   const stop=()=>clearInterval(t),play=()=>{stop();if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;t=setInterval(()=>go(n+1),5500)};
   dt.forEach((x,k)=>x.onclick=()=>{go(k);play()});
-  r.querySelector('.sl-a.l').onclick=()=>{go(n+1);play()};r.querySelector('.sl-a.r').onclick=()=>{go(n-1);play()};
+  if(S.length === 1){
+    const lBtn = r.querySelector('.sl-a.l');
+    const rBtn = r.querySelector('.sl-a.r');
+    const dots = r.querySelector('.dots');
+    if(lBtn) lBtn.style.display = 'none';
+    if(rBtn) rBtn.style.display = 'none';
+    if(dots) dots.style.display = 'none';
+  } else {
+    r.querySelector('.sl-a.l').onclick=()=>{go(n+1);play()};
+    r.querySelector('.sl-a.r').onclick=()=>{go(n-1);play()};
+  }
   r.addEventListener('mouseenter',stop);r.addEventListener('mouseleave',play);
   let x0=null;r.addEventListener('pointerdown',e=>{x0=e.clientX;stop()});
   r.addEventListener('pointerup',e=>{if(x0!=null&&Math.abs(e.clientX-x0)>45)go(n+(e.clientX<x0?1:-1));x0=null;play()});
@@ -628,7 +632,6 @@ async function adminProducts(){
   const load=async()=>{
     await loadData();
     const r=await rest('products?select=*&order=created_at.desc,id.asc').catch(()=>null);
-    if(r&&r.ok){ for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.includes('/rest/v1/products')) { localStorage.removeItem(key); i--; } } }
     if(!r||!r.ok){box.innerHTML='<p class="err">جدول محصولات پیدا نشد.</p>';return}
     list=r.d;draw()
   };
@@ -733,6 +736,10 @@ async function adminProducts(){
       const catSlug=catObj?((catObj.slug && /^[a-z0-9-]+$/i.test(catObj.slug)) ? catObj.slug : String(catObj.id)):chosenCat;
       const row={id:p.id,cat:catSlug,category_id:catObj?Number(catObj.id):null,name,price,stock,discount:Math.min(90,Math.max(0,parseInt(($('#f_disc').value||'').replace(/[^0-9]/g,''),10)||0)),description:$('#f_desc').value.trim(),specs,best:$('#f_best').checked,is_new:$('#f_new').checked,active:$('#f_act').checked,image};
       const r=await rest('products?on_conflict=id','POST',row,'resolution=merge-duplicates,return=minimal').catch(()=>null);
+      
+      // پاک کردن کش محصولات بعد از ذخیره
+      if(r&&r.ok){ for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.includes('/rest/v1/products')) { localStorage.removeItem(key); i--; } } }
+      
       if(!r||!r.ok)return m.textContent='ذخیره نشد.';
       const fvals=[];
       f.querySelectorAll('.filter-select').forEach(sel=>{if(sel.value)fvals.push({product_id:p.id,filter_id:Number(sel.dataset.fid),option_id:Number(sel.value)})});
@@ -746,6 +753,7 @@ async function adminProducts(){
   };
   load()
 }
+
 // ==================== NEW FILTER MODAL ====================
 const closeBtn = document.getElementById('closeFilters');
 if(closeBtn) {
@@ -777,7 +785,6 @@ if(applyBtn) {
         location.href = url.toString();
     };
 }
-
 async function loadModalFilters(catId) {
     const content = document.getElementById('filterContent');
     if(!content) return;
@@ -803,23 +810,7 @@ async function loadModalFilters(catId) {
         content.innerHTML = html;
     } catch(e) { content.innerHTML = '<p style="padding:20px;text-align:center;color:#e5384f">خطا در بارگذاری فیلترها.</p>'; }
 }
-// ==================== WISHLIST PAGE ====================
-function wishlistPage(){
-  const box=$('#wishBox');if(!box)return;
-  const w=wish();
-  if(!w.length){
-    box.innerHTML='<div class="empty"><i class="ti ti-heart-off"></i><h2>لیست علاقه‌مندی‌های شما خالی است</h2><p>محصولاتی که دوست دارید را با کلیک روی قلب ذخیره کنید.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';
-    return;
-  }
-  const items = products.filter(p=>w.includes(p.id));
-  box.innerHTML=`<div class="grid">`+items.map(p=>`<div class="card" style="--c:${(cats.find(c=>c.id==p.cat)||{col:'#a78bfa'}).col}; position:relative;">
-      <button class="wish-btn on" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
-      <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3></a>
-      <div class="price">${priceTxt(p)}</div>
-      <button class="btn add" data-id="${p.id}">افزودن به سبد</button>
-    </div>`).join('')+'</div>';
-  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
-}
+
 // ==================== REVIEWS ====================
 async function loadReviews(productId) {
   const list = document.getElementById('reviewsList');
@@ -845,7 +836,6 @@ async function loadReviews(productId) {
       `).join('');
     }
 
-    // ساخت فرم ثبت نظر
     if(!session()) {
       formBox.innerHTML = `<p class="mu" style="margin-top:20px;">برای ثبت نظر ابتدا <a href="login.html" style="color:var(--pl)">وارد شوید</a>.</p>`;
     } else {
@@ -861,17 +851,10 @@ async function loadReviews(productId) {
       
       let selectedRating = 5;
       const stars = formBox.querySelectorAll('#ratingStars i');
-      const updateStars = (val) => {
-        stars.forEach((s, i) => s.classList.toggle('on', i < val));
-      };
+      const updateStars = (val) => { stars.forEach((s, i) => s.classList.toggle('on', i < val)); };
       updateStars(5);
 
-      stars.forEach(s => {
-        s.onclick = () => {
-          selectedRating = parseInt(s.dataset.v);
-          updateStars(selectedRating);
-        };
-      });
+      stars.forEach(s => { s.onclick = () => { selectedRating = parseInt(s.dataset.v); updateStars(selectedRating); }; });
 
       document.getElementById('submitReview').onclick = async () => {
         const comment = document.getElementById('revComment').value.trim();
@@ -881,13 +864,7 @@ async function loadReviews(productId) {
         btn.disabled = true; btn.textContent = 'در حال ثبت...';
         
         const s = session();
-        const row = {
-          product_id: productId,
-          user_id: null, // اگر از auth.uid استفاده می‌کنید، null کافی است
-          user_name: s.name || 'کاربر',
-          rating: selectedRating,
-          comment: comment
-        };
+        const row = { product_id: productId, user_id: null, user_name: s.name || 'کاربر', rating: selectedRating, comment: comment };
 
         const post = await rest('reviews', 'POST', row).catch(()=>null);
         btn.disabled = false; btn.textContent = 'ثبت نظر';
@@ -895,13 +872,30 @@ async function loadReviews(productId) {
         if(!post || !post.ok) return toast('خطا در ثبت نظر.');
         toast('نظر شما با موفقیت ثبت شد.');
         document.getElementById('revComment').value = '';
-        loadReviews(productId); // رفرش لیست
+        loadReviews(productId);
       };
     }
-  } catch(e) {
-    list.innerHTML = '<p class="err">خطا در بارگذاری نظرات.</p>';
-  }
+  } catch(e) { list.innerHTML = '<p class="err">خطا در بارگذاری نظرات.</p>'; }
 }
+
+// ==================== WISHLIST PAGE ====================
+function wishlistPage(){
+  const box=$('#wishBox');if(!box)return;
+  const w=wish();
+  if(!w.length){
+    box.innerHTML='<div class="empty"><i class="ti ti-heart-off"></i><h2>لیست علاقه‌مندی‌های شما خالی است</h2><p>محصولاتی که دوست دارید را با کلیک روی قلب ذخیره کنید.</p><a class="btn" href="index.html">دیدن محصولات</a></div>';
+    return;
+  }
+  const items = products.filter(p=>w.includes(p.id));
+  box.innerHTML=`<div class="grid">`+items.map(p=>`<div class="card" style="--c:${(cats.find(c=>c.id==p.cat)||{col:'#a78bfa'}).col}; position:relative;">
+      <button class="wish-btn on" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
+      <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}</div><h3>${esc(p.name)}</h3></a>
+      <div class="price">${priceTxt(p)}</div>
+      <button class="btn add" data-id="${p.id}">افزودن به سبد</button>
+    </div>`).join('')+'</div>';
+  box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
+}
+
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
