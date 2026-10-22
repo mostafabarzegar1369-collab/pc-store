@@ -947,3 +947,4 @@ header { position: sticky !important; top: 0; z-index: 1000; background: rgba(13
   display: flex; align-items: center; justify-content: center;
 }
 .qv-btn-eye:hover { background: #8b5cf6; }
+.qv-img-box i { font-size: 120px; color: var(--pl); filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5)); }
