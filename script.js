@@ -190,6 +190,7 @@ async function shop(){
       l.map(p => `
         <div class="card" style="--c:${c.col}; position:relative;">
           <button class="wish-btn" data-id="${p.id}" onclick="event.preventDefault();toggleWish('${p.id}')"><i class="ti ti-heart"></i></button>
+          <button class="qv-btn-eye" onclick="event.preventDefault();openQuickView('${p.id}')" aria-label="نمایش سریع"><i class="ti ti-eye"></i></button>
           <a href="product.html?id=${p.id}"><div class="pic">${pic(p)}${p.disc?`<span class="bj ds">${fa(p.disc)}٪ تخفیف</span>`:p.best?'<span class="bj">پرفروش</span>':p.new?'<span class="bj nw">جدید</span>':''}</div><h3>${esc(p.name)}</h3></a>
           <button class="cmpb" data-id="${p.id}" aria-label="مقایسه"><i class="ti ti-arrows-diff"></i></button>
           <div class="price">${priceTxt(p)}</div>
@@ -1155,5 +1156,6 @@ if($('#prodBox')) $('#prodBox').innerHTML = `<div class="skeleton-card" style="m
   const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
   document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
 initBackToTop();
+initQuickView();
 }
 init();
