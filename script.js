@@ -202,7 +202,6 @@ async function shop(){
     if(!l.length)return'';
     return`<h2 class="g" id="${c.id}" style="--c:${c.col}"><i class="ti ${c.i}"></i>${esc(c.n)}</h2><div class="grid">`+l.map(p=>{
       
-      // منطق نمایش دکمه خرید
       const cartData = cart();
       const qty = cartData[p.id] || 0;
       let addBtn = '';
@@ -231,7 +230,6 @@ async function shop(){
 
   box.querySelectorAll('.card').forEach(c=>tilt(c,18,-8));
   
-  // رویداد کلیک برای دکمه‌ها
   box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);shop();});
   box.querySelectorAll('.iq-btn.plus').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);shop();});
   box.querySelectorAll('.iq-btn.minus').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)-1;if(c[b.dataset.id]<=0)delete c[b.dataset.id];saveCart(c);shop();});
@@ -310,8 +308,11 @@ function productPage(){
   </div>`;
 
   const addpBtn = $('#addp');
+  const addpBtn = $('#addp');
   if(addpBtn) addpBtn.onclick = () => {const k=cart();k[p.id]=(k[p.id]||0)+1;saveCart(k);toast('به سبد خرید اضافه شد')};
-  tilt($('#pimg'),16,0);zoomable($('#pimg'));$('#cmpp').onclick=()=>toggleCmp(p.id);syncCmp();
+  if($('#pimg')) { tilt($('#pimg'),16,0); zoomable($('#pimg')); }
+  if($('#cmpp')) $('#cmpp').onclick=()=>toggleCmp(p.id);
+  syncCmp();
   box.querySelectorAll('.grid .card').forEach(x=>tilt(x,18,-8));
   syncWishlist(); 
   
