@@ -830,3 +830,41 @@ header { position: sticky !important; top: 0; z-index: 1000; background: rgba(13
 @keyframes shimmer {
   100% { transform: translateX(100%); }
 }
+/* ========== BACK TO TOP BUTTON ========== */
+#backToTop {
+  position: fixed;
+  bottom: 25px;
+  left: 25px; /* گوشه پایین سمت چپ */
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+  z-index: 9999;
+  
+  /* حالت اولیه (مخفی) */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+/* وقتی کلاس show اضافه بشه، نمایش داده میشه */
+#backToTop.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+#backToTop:hover {
+  background: #a78bfa;
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+}
