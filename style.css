@@ -868,3 +868,82 @@ header { position: sticky !important; top: 0; z-index: 1000; background: rgba(13
   transform: translateY(-5px);
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
 }
+/* ========== QUICK VIEW MODAL ========== */
+#quickViewModal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(8, 7, 13, 0.85); /* پس‌زمینه تیره نیمه‌شفاف */
+  backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#quickViewModal.show {
+  display: flex;
+}
+.qv-content {
+  background: var(--card);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 20px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  animation: popIn 0.3s ease;
+}
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@media (min-width: 768px) {
+  .qv-content { flex-direction: row; } /* در دسکتاپ کنار هم */
+}
+.qv-img-box {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1428;
+  border-radius: 20px 0 0 20px;
+}
+.qv-img-box img { max-width: 100%; max-height: 300px; object-fit: contain; }
+.qv-info {
+  flex: 1;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.qv-info h2 { color: #fff; margin-bottom: 10px; font-size: 22px; }
+.qv-info .qv-price { color: var(--pl); font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+.qv-info .qv-desc { color: #aaa; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+.qv-close {
+  position: absolute;
+  top: 15px; left: 15px;
+  background: #e5384f; color: #fff;
+  border: none; width: 35px; height: 35px;
+  border-radius: 50%; font-size: 20px;
+  cursor: pointer; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+}
+.qv-btn-eye {
+  position: absolute;
+  top: 10px; right: 10px; /* در سایت‌های راست‌چین، شاید چپ بهتره */
+  left: auto;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+}
+.qv-btn-eye:hover { background: #8b5cf6; }
