@@ -1060,6 +1060,29 @@ function getSkeletonHTML(count = 4) {
   html += '</div>';
   return html;
 }
+// ==================== BACK TO TOP ====================
+function initBackToTop() {
+  // ساخت دکمه به صورت داینامیک
+  const btn = document.createElement('button');
+  btn.id = 'backToTop';
+  btn.innerHTML = '<i class="ti ti-chevron-up"></i>';
+  btn.setAttribute('aria-label', 'بازگشت به بالا');
+  document.body.appendChild(btn);
+
+  // نمایش/مخفی کردن دکمه بر اساس اسکرول
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 400) {
+      btn.classList.add('show');
+    } else {
+      btn.classList.remove('show');
+    }
+  });
+
+  // اسکرول نرم به بالا هنگام کلیک
+  btn.onclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+}
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
