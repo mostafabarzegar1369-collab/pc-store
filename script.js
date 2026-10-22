@@ -956,10 +956,98 @@ function wishlistPage(){
   box.querySelectorAll('.add').forEach(b=>b.onclick=()=>{const c=cart();c[b.dataset.id]=(c[b.dataset.id]||0)+1;saveCart(c);toast('به سبد خرید اضافه شد')});
 }
 
+// ==================== ADMIN COUPONS ====================
+async function adminCoupons(){
+  const box=$('#cpBox');if(!box)return;
+  const msg=(i,t,p,b)=>box.innerHTML=`<div class="empty"><i class="ti ${i}"></i><h2>${t}</h2><p>${p||''}</p>${b||''}</div>`;
+  if(!session())return msg('ti-lock','ابتدا وارد شوید','','<a class="btn" href="login.html">ورود</a>');
+  await refreshSession();
+  const a=await rest('admins?select=user_id').catch(()=>null);
+  if(!a||!a.ok||!a.d.length)return msg('ti-lock','دسترسی ندارید','این صفحه فقط برای مدیر است.');
+
+  let list=[];
+  const load=async()=>{
+    const r=await rest('coupons?select=*&order=created_at.desc').catch(()=>null);
+    if(!r||!r.ok){box.innerHTML='<p class="err">جدول کدهای تخفیف پیدا نشد.</p>';return}
+    list=r.d;draw();
+  };
+
+  const draw=()=>{
+    box.innerHTML=`
+      <div class="ap-bar">
+        <button class="btn" id="cpNew"><i class="ti ti-plus"></i> کد تخفیف جدید</button>
+        <span class="mu">${fa(list.length)} کد ثبت شده</span>
+      </div>
+      <div id="cpForm"></div>
+      <div>${list.map(c=>`<div class="ap-row ${c.is_active?'':'off'}">
+        <div class="pic sm" style="background:#2a1f4a; display:flex; align-items:center; justify-content:center; border-radius:8px;"><i class="ti ti-ticket" style="font-size:20px; color:#a78bfa;"></i></div>
+        <div class="inf">
+          <b style="font-family:monospace; font-size:16px; letter-spacing:1px;">${esc(c.code)}</b>
+          <div class="mu">
+            ${c.discount_type==='percent' ? `${fa(c.amount)}٪ تخفیف` : `${fa(c.amount)} تومان تخفیف`}
+            ${c.min_purchase > 0 ? ` · حداقل خرید: ${fa(c.min_purchase)} تومان` : ''}
+            ${c.is_active ? ' · <span style="color:#7be0a4">فعال</span>' : ' · <span style="color:#e5384f">غیرفعال</span>'}
+          </div>
+        </div>
+        <button class="btn ghost" data-toggle="${esc(c.id)}" data-active="${c.is_active}">${c.is_active?'غیرفعال':'فعال'}</button>
+        <button class="rm" data-del="${esc(c.id)}" aria-label="حذف"><i class="ti ti-trash"></i></button>
+      </div>`).join('')||'<p class="mu">هنوز کد تخفیفی ثبت نشده است.</p>'}</div>`;
+
+    $('#cpNew').onclick=()=>form();
+
+    box.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
+      const newStatus = b.dataset.active === 'true' ? false : true;
+      const r = await rest('coupons?id=eq.'+b.dataset.toggle,'PATCH',{is_active:newStatus},'return=minimal').catch(()=>null);
+      toast(r&&r.ok?'وضعیت تغییر کرد':'خطا در تغییر وضعیت'); load();
+    });
+
+    box.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+      if(!confirm('این کد تخفیف حذف شود؟'))return;
+      const r=await rest('coupons?id=eq.'+b.dataset.del,'DELETE',null,'return=minimal').catch(()=>null);
+      toast(r&&r.ok?'حذف شد':'حذف نشد'); load();
+    });
+  };
+
+  const form=()=>{
+    const f=$('#cpForm');
+    f.innerHTML=`
+      <div class="apf">
+        <h3>کد تخفیف جدید</h3>
+        <label>کد تخفیف (انگلیسی و بزرگ)<input id="c_code" placeholder="مثلاً SUMMER20" style="text-transform:uppercase; font-family:monospace;"></label>
+        <label>نوع تخفیف<select id="c_type"><option value="percent">درصدی</option><option value="fixed">مبلغ ثابت (تومان)</option></select></label>
+        <label>مقدار تخفیف<input id="c_amount" inputmode="numeric" placeholder="مثلاً ۲۰ (برای درصد) یا ۵۰۰۰۰ (برای مبلغ)"></label>
+        <label>حداقل مبلغ خرید (اختیاری - برای همه خریدها ۰ بگذارید)<input id="c_min" inputmode="numeric" placeholder="۰"></label>
+        <div class="err" id="c_msg"></div>
+        <div class="ap-bar">
+          <button class="btn" id="c_save">ذخیره</button>
+          <button class="btn ghost" id="c_cancel">انصراف</button>
+        </div>
+      </div>`;
+      
+    $('#c_cancel').onclick=()=>f.innerHTML='';
+    $('#c_save').onclick=async()=>{
+      const m=$('#c_msg'), code=$('#c_code').value.trim().toUpperCase(), type=$('#c_type').value, amount=parseInt($('#c_amount').value), minPurchase=parseInt($('#c_min').value)||0;
+      if(!code || code.length < 3) return m.textContent='کد تخفیف باید حداقل ۳ حرف باشد.';
+      if(!amount || amount <= 0) return m.textContent='مقدار تخفیف را صحیح وارد کنید.';
+      
+      m.textContent='در حال ذخیره...';
+      const row = { code, discount_type: type, amount, min_purchase: minPurchase, is_active: true };
+      
+      const r = await rest('coupons','POST',row).catch(()=>null);
+      if(!r || !r.ok) {
+        if(r && r.d && r.d.code === '23505') return m.textContent='این کد تخفیف قبلاً ساخته شده است.';
+        return m.textContent='ذخیره نشد. دوباره تلاش کنید.';
+      }
+      toast('کد تخفیف ساخته شد'); load();
+    };
+    f.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  load();
+}
 // ==================== INIT ====================
 async function init(){
   await loadCatsFromDB();
-  header();footer();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();
+  header();footer();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();adminCoupons();
   refreshSession().then(()=>{if($('#hdr'))header()});
   loadProducts().then(d=>{products=d;shop();productPage();cartPage();wishlistPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد.</p>'})});
   const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
