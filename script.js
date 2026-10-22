@@ -1095,5 +1095,6 @@ if($('#best')) $('#best').innerHTML = getSkeletonHTML(3);
 if($('#prodBox')) $('#prodBox').innerHTML = `<div class="skeleton-card" style="max-width:600px;margin:40px auto;"><div class="skeleton-pic" style="height:300px"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div><div class="skeleton-btn"></div></div>`; loadProducts().then(d=>{products=d;shop();productPage();cartPage();wishlistPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد.</p>'})});
   const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
   document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
+initBackToTop();
 }
 init();
