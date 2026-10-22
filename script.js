@@ -1116,7 +1116,7 @@ function openQuickView(id) {
   const modal = document.getElementById('quickViewModal');
   if(!modal) return;
 
-  document.getElementById('qvImg').src = p.img || 'images/' + p.id + '.jpg';
+  document.querySelector('.qv-img-box').innerHTML = pic(p);
   document.getElementById('qvName').textContent = p.name;
   document.getElementById('qvPrice').innerHTML = priceTxt(p);
   document.getElementById('qvDesc').textContent = p.desc || descs[p.cat] || 'توضیحات این محصول به‌زودی اضافه می‌شود.';
