@@ -21,7 +21,7 @@ const catIconsMap={mon:'ti-device-desktop',hard:'ti-server',cpu:'ti-cpu',gpu:'ti
 const catColors=['#a78bfa','#8b5cf6','#c084fc','#818cf8','#b794f6','#9f7aea','#7c9cff','#c4b5fd','#9d8cff','#d8a7ff','#ff8fc7','#8ea2ff','#b9a4ff'];
 async function loadCatsFromDB(){
   try{
-    const r=await fetchWithCache(SB+'/rest/v1/categories?select=*&order=created_at.asc',{headers:{apikey:KEY}}, 3600000);
+    const r=await fetch(SB+'/rest/v1/products?select=*&active=eq.true&order=created_at.asc,id.asc',{headers:{apikey:KEY}});
     if(!r.ok){cats=[];subs={};return}
     const dbCats=await r.json();
     if(!Array.isArray(dbCats)||!dbCats.length){cats=[];subs={};return}
