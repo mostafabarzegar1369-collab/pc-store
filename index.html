@@ -95,6 +95,11 @@
         <input class="search" id="search" placeholder="جستجو در محصولات">
         <div id="shop"></div>
     </main>
+  <script>
+  window.onerror = function(msg, url, line, col, error) {
+    alert("خطای سایت: " + msg + "\nخط شماره: " + line);
+  };
+</script>
     <script src="script.js"></script>
 </body>
 </html>
