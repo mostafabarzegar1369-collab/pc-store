@@ -1145,17 +1145,27 @@ function openQuickView(id) {
 }
 // ==================== INIT ====================
 async function init(){
-  await loadCatsFromDB();
-  header();footer();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();adminCoupons();
-  refreshSession().then(()=>{if($('#hdr'))header()});
+  try {
+    await loadCatsFromDB();
+    header();footer();tiles();slider();gamesPage();auth();ordersPage();adminPage();adminProducts();adminPrices();
+    
+    // اگر adminCoupons رو ساختی، این خط رو از کامنت دربیار:
+    // adminCoupons();
 
- // نمایش اسکلتون قبل از لود محصولات
-if($('#shop')) $('#shop').innerHTML = getSkeletonHTML(6);
-if($('#best')) $('#best').innerHTML = getSkeletonHTML(3);
-if($('#prodBox')) $('#prodBox').innerHTML = `<div class="skeleton-card" style="max-width:600px;margin:40px auto;"><div class="skeleton-pic" style="height:300px"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div><div class="skeleton-btn"></div></div>`; loadProducts().then(d=>{products=d;shop();productPage();cartPage();wishlistPage();bestRail();comparePage();cmpBar()}).catch(()=>{['#shop','#prodBox','#cartBox'].forEach(k=>{const e=$(k);if(e)e.innerHTML='<p class="err">بارگذاری محصولات انجام نشد.</p>'})});
-  const s=$('#search');if(s)s.value=q;if(s)s.oninput=()=>{q=s.value.trim();shop()};
-  document.querySelectorAll('.fan').forEach(f=>tilt(f,24,0));
-initBackToTop();
-initQuickView();
+    refreshSession().then(()=>{if($('#hdr'))header()});
+    
+    loadProducts().then(d=>{
+      products=d;
+      shop();productPage();cartPage();wishlistPage();bestRail();comparePage();cmpBar();
+    }).catch((err)=>{
+      alert('خطا در لود محصولات: ' + err.message);
+    });
+
+    initBackToTop();
+    initQuickView();
+    
+  } catch (e) {
+    alert('خطای اصلی در init: ' + e.message);
+  }
 }
 init();
